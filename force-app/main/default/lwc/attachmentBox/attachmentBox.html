@@ -1,0 +1,23 @@
+<template>
+    <div class="container item-data slds-p-horizontal_xx-small slds-p-vertical_x-small slds-text-align_left slds-grid slds-gutters">
+        <div class="slds-col container">
+            <div>
+                <p class="file-name slds-truncate">{itemData.label}</p>
+            </div>
+            <div class="file-add-data">
+                {itemData.date}
+                <span> | </span>
+                {itemData.size}
+            </div>
+        </div>
+        <div class="slds-col slds-align-middle slds-align_absolute-center">
+            <lightning-button-icon  icon-name="utility:close"
+                                    variant="bare"
+                                    alternative-text="Delete"
+                                    class="slds-m-left_xx-small"
+                                    title="Delete"
+                                    onclick={handleRemove}>
+           </lightning-button-icon>
+        </div>
+    </div>    
+</template>

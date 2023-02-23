@@ -1,0 +1,67 @@
+<apex:page standardController="Audit__c" extensions="AuditCaseRptExt" showHeader="false" sidebar="false">
+
+<style>
+    .hidespan {
+        visibility:hidden;
+    }
+
+</style>
+<script type="text/JavaScript">
+
+function stuffp() {
+    var pn = document.getElementById("pn").innerHTML;
+    var pa = document.getElementById("pa").innerHTML;
+    var pb = document.getElementById("pb").innerHTML;
+    var pm = document.getElementById("pm").innerHTML;
+    if (confirm("Click 'OK' to download the Audit Report PDF file,"+"\n"+"or click 'Cancel' to display it as a PDF web page")) {
+        DownloadAction();
+    } else {
+        DisplayAction();  
+    }  
+}
+</script>
+
+<apex:outputText value="{!Audit__c.Audit_Stage__c} {!Audit__c.Client_Audit_Account__r.Prefs_Include_Disputed__c}
+{!Audit__c.Client_Audit_Account__r.Prefs_Include_Unbilled__c} {!Audit__c.Date_Actual_Exit__c}" rendered="false" />
+    
+<apex:outputText value="{!Audit__c.Account__c} {!Audit__c.Client_Audit_Account__r.Name} {!Audit__c.Audit_Type__c}
+{!Audit__c.Assigned_Auditor__r.Name} {!Audit__c.Account__r.Name} {!Audit__c.Date_LOI__c}" rendered="false" />
+    
+<apex:outputText value="{!Audit__c.Opposing_Auditor__r.Name} {!Audit__c.Audit_Fee_Paid__c} {!Audit__c.Opposing_Audit_Account__r.Name}
+{!Audit__c.Audit_Amount__c} {!Audit__c.TAmt_Billed__c} {!Audit__c.Service_Start_Date__c} {!Audit__c.Service_End_Date__c}" rendered="false" />
+
+<apex:outputText value="{!Audit__c.Patient_Auth_Date__c} {!Audit__c.Tot_Items__c} {!Audit__c.Payer__c} {!Audit__c.Payer_Type__c}
+{!Audit__c.Pre_Audit_Dis__c}  {!Audit__c.TAmt_Under__c} {!Audit__c.TAmt_Unbill__c}" rendered="false" />
+
+<apex:outputText value="{!Audit__c.TAmt_SumUnder__c} {!Audit__c.Percent_Under__c} {!Audit__c.TAmt_SumOver__c} {!Audit__c.Percent_Over__c}
+{!Audit__c.TAmt_Disallowed__c} {!Audit__c.Percent_Disallowed__c} {!Audit__c.TAmt_Disputed__c} {!Audit__c.Percent_Disputed__c}" rendered="false" />
+
+<apex:outputText value="{!Audit__c.TAmt_Adj__c} {!Audit__c.Percent_Net_Adj__c} {!Audit__c.TAmt_Revised__c}
+{!Audit__c.Patient_Name__c} {!Audit__c.Patient_DOB__c} {!Audit__c.Patient_Account__c} {!Audit__c.Patient_MR__c}
+{!Audit__c.Name} {!Audit__c.Percent_Tot_Err__c}" rendered="false" />
+
+<body onload="stuffp()">        
+<apex:PageBlock >
+<apex:form >
+    
+    <span class="hidespan" id="pn">{!stuffpn}</span>
+    <span class="hidespan" id="pa">{!stuffpa}</span>
+    <span class="hidespan" id="pb">{!stuffpb}</span>
+    <span class="hidespan" id="pm">{!stuffpm}</span>
+
+<apex:outputText value="Loading Audit Case Report..." id="loader" />
+
+
+<apex:actionFunction name="DownloadAction" action="{!SaveReportPage}" immediate="true">
+</apex:actionFunction>
+
+<apex:actionFunction name="DisplayAction" action="{!DisplayReportPage}" immediate="true">
+</apex:actionFunction>
+
+</apex:form>
+
+</apex:PageBlock>
+</body>
+
+
+</apex:page>

@@ -1,0 +1,36 @@
+<apex:page showHeader="true" tabstyle="Account">
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script type="text/JavaScript">
+
+    var $j = jQuery.noConflict();
+    $j(window).load(function(){
+    
+        $j(document).ajaxSend(function(event, request, settings) {
+           $j('#loading').show();
+         });
+ 
+        $j(document).ajaxComplete(function(event, request, settings) {
+           $j('#loading').hide();
+         });
+         $j("#loading").css("border","3px solid red");
+     });
+       
+    function killCSS(){
+        $j('.x-grid3-td-ACTION_COLUMN').css('display', 'none');
+        $j('.x-grid3-td-checkbox').css('display', 'none');
+  };   
+</script>
+</head>
+
+<apex:pageBlock >
+
+<button onclick="killCSS()">Kill CSS</button>
+<div id="loading">
+<h1>Ajax in Progress...</h1>
+</div>
+</apex:pageBlock>
+  <apex:enhancedList type="Account" height="300" rowsPerPage="10" id="AccountList" />
+  
+
+</apex:page>

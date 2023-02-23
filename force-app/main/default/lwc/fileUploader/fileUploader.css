@@ -1,0 +1,23 @@
+.layout-file-data {    
+    border: 1px dashed rgb(221, 219, 218);    
+    border-radius: 3px;
+}
+.file-data {    
+    font-size: 18px;
+}
+.file-data .file-add-data {   
+    opacity: 0.5;
+    font-size: 16px;
+}
+.btn-file-saved {
+    padding: 8px 16px 9px;
+    background: rgba(236, 235, 234, 0.4);
+    border: none;
+    border-radius: 3px;
+    color:rgba(8, 7, 7, 0.6);
+    cursor: auto;
+   
+}
+.icon {
+    margin-right: 10px;
+}

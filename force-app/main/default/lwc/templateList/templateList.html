@@ -1,0 +1,52 @@
+<template>
+    <lightning-spinner alternative-text="Loading" size="large" if:true={showSpinner}></lightning-spinner>
+    <div class="template-list slds-m-around_medium">
+        <div class="slds-grid">
+            <span class="slds-col_bump-right header slds-m-top_medium">Select an existing template <span class="number-of-templates">({numberOfTemplates})</span></span>
+            <lightning-input  style="width: 300px" type="search" class="slds-m-bottom_medium" placeholder="Search" onchange={filterTemplates}></lightning-input>
+        </div>
+        <div class="slds-scrollable_y" style="height:330px">
+            <template for:each={filteredItems} for:item="item2">
+                <div key={item2.value} onclick={handleTemplateClick} data-id={item2.value} class="slds-m-top_x-small slds-m-bottom_x-small div_hover div_template">
+                    <div class="slds-grid">
+                        <div>
+                            <button class="preview-button" onclick={previewHandler} data-id={item2.value}>
+                                <lightning-icon icon-name="doctype:gdoc" size="large" ></lightning-icon>
+                            </button>
+                        </div>
+                        <div style="margin-left: 7px; margin-top: 4px" class="slds-col_bump-right">
+                            <div class="slds-is-collapsed" data-value={item2.value}>
+                                <lightning-input onchange={handleTitleChange} style="display: inline-block; width: 250px" variant="label-hidden" type="text" label="text" value={item2.label}></lightning-input>
+                                <button class="check-button" onclick={handleCheckClick} data-id={item2.value}>
+                                    <lightning-icon icon-name="utility:check" class="slds-m-left_x-large check-icon" size="small"></lightning-icon>
+                                </button>
+                                <button class="cancel-button" onclick={handleCancelClick} data-id={item2.value}>
+                                    <lightning-icon icon-name="utility:clear" class="slds-m-left_x-large cancel-icon" size="small"></lightning-icon>
+                                </button>
+                            </div>
+                            <div class="document-name" data-label={item2.value}>
+                                {item2.label}
+                            </div>
+                            <div class="document-date-size">
+                                {item2.docDate} | {item2.docType} | {item2.docSize}
+                            </div>
+                        </div>
+                        <div class="slds-align-middle">
+                            <button data-button={item2.value} class="edit-button" onclick={handleEditClick} data-id={item2.value}>
+                                <lightning-icon icon-name="utility:edit" class="slds-m-right_x-large utility-icon" size="small"></lightning-icon>
+                            </button>
+                            <a href={item2.url}>
+                                <lightning-icon icon-name="utility:download" class="slds-m-right_x-large utility-icon" size="small"></lightning-icon>
+                            </a>
+                            <button class="preview-button" onclick={handleDeleteTemplate} data-id={item2.value}>
+                                <lightning-icon icon-name="utility:delete" class="slds-m-right_x-large utility-icon" size="small"></lightning-icon>
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+                <hr key={item2.value} class="divider">
+            </template>
+        </div>
+    </div>
+</template>

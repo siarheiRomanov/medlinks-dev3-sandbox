@@ -1,0 +1,832 @@
+<apex:page id="AppealDetail" standardController="Appeal__c" extensions="AppealDetailCtrl" showHeader="true" tabStyle="Appeal__c">
+    <style>
+        .fieldNameStyle {
+            font-weight: bold;
+            color: #000;
+            font-size: 12px;
+        }
+
+        .fieldValueStyle {
+            color: #000;
+            font-size: 12px;
+        }
+
+        .headerTableStyle {
+            text-align: center;
+            background-color: #F8F8F8;
+        }
+
+        .contentTableStyle {
+            text-align: right;
+        }
+
+        .whiteSpaceNoWrapStyle {
+            white-space: nowrap;
+        }
+
+        .appealCaseStyle {
+            text-align: left;
+            font-size: 150%
+        }
+
+        .auditorStyle {
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .stageRoleTypeClass {
+            white-space: nowrap;
+            text-align: center;
+            font-size: 150%;
+        }
+
+        .modeClass {
+            white-space: nowrap;
+            text-align: left;
+            padding-left: 10rem;
+        }
+
+        .exitDateClass {
+            white-space: nowrap;
+            text-align: center;
+            padding-left: 1rem;
+            font-size: 150%;
+        }
+
+        .scheduledActivityStyle {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .reportButtonStyle {
+            position: absolute;
+            right: 13px;
+            top: 13px;
+        }
+
+        .analyzeButtonStyle {
+            position: absolute;
+            right: 125px;
+            top: 13px;
+        }
+
+        .width-column {
+            width: 50% !important;
+        }
+
+        .hide-item {
+            display: none;
+        }
+
+        .financial-table-style {
+            width: 100%;
+            display: table;
+            border-collapse: separate;
+            box-sizing: border-box;
+            text-indent: initial;
+            border-spacing: 2px;
+            border: 1px solid grey;
+        }
+
+        .financial-table-style tr td {
+            border: 1px solid grey;
+        }
+
+        .header-style {
+            display: flex;
+            width: 100%;
+        }
+
+        .header-style-item-1 {
+            width: 30%;
+        }
+
+        .header-style-item-2 {
+            width: 40%;
+        }
+
+        .textLink {
+            cursor: text;
+            text-decoration: none;
+        }
+
+        .textLink:hover {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .newNoteButtonStyle {
+            position: absolute;
+            right: 13px;
+            top: 13px;
+            text-decoration: none;
+        }
+
+        .generateButtonStyle {
+            position: absolute;
+            right: 1px;
+            top: 1px;
+            text-decoration: none;
+        }
+
+        .actionTableStyle {
+            text-align: center;
+        }
+
+        .editNoteButtonStyle {
+            text-decoration: none;
+        }
+
+        .width-summary-column-1 {
+            width: 60% !important;
+        }
+
+        .width-summary-column-2 {
+            width: 40% !important;
+        }
+
+        .width-summary-column-1-large {
+            width: 63% !important;
+        }
+
+        .width-summary-column-2-small {
+            width: 37% !important;
+        }
+
+        .width-summary-column-1-large-multiselect {
+            width: 73.5% !important;
+        }
+
+        .width-summary-column-2-small-multiselect {
+            width: 26.5% !important;
+        }
+
+        .width-summary-column-1-large-multi-select-1 {
+            width: 70% !important;
+        }
+
+        .width-summary-column-2-small-multi-select-1 {
+            width: 30% !important;
+        }
+
+        .width-summary-column-1-large-multi-select-2 {
+            width: 80% !important;
+        }
+
+        .width-summary-column-2-small-multi-select-2 {
+            width: 20% !important;
+        }
+
+        .inputFiledStyle {
+            width: 100%;
+        }
+
+        .reason-gap {
+            padding-bottom: 24px;
+        }
+
+        .reason-gap-complete {
+            padding-top: 14px;
+        }
+
+        option {
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        .right-content {
+            display: flex;
+            justify-content: end;
+        }
+
+        .main-doc-style {
+            color: red !important;
+        }
+    </style>
+
+    <script type="text/JavaScript">
+        window.addEventListener('load', function() {
+            // hide top border for Appeal Summary Details PageBlock
+            const pageBlocks = document.querySelectorAll('.bPageBlock');
+
+            pageBlocks.forEach(item => {
+                if (item.innerText.startsWith('Analysis Complete - Editing Disabled') || item.innerText.startsWith('Appeal Notes') || item.innerText.startsWith('Analysis Complete')) {
+                    item.style = 'border-top: 0; padding-top: 5px; position:relative;';
+                }
+                if (item.innerText.startsWith('Appeal Notes')) {
+                    item.children[1].children[1].style = 'position:relative;';
+                    item.children[1].children[2].style = 'position:relative;';
+                }
+            });
+
+            const sectionHeaders = document.querySelectorAll('.pageDescription');
+            let sectionHeaderAppeal;
+
+            sectionHeaders.forEach(item => {
+                if (item.parentElement.innerText.startsWith('Appeal Detail View')) {
+                    sectionHeaderAppeal = item;
+                }
+            });
+
+            sectionHeaderAppeal.style = 'font-size: 100%; margin: 0;';
+            sectionHeaderAppeal.innerHTML = ("<h2 class=\"pageDescription\"><a href=\"{!URLFOR($Action.Account.View, accountId)}\">{!accountName}</a></h2>");
+
+            if ({!Appeal__c.Analysis_Complete__c == true}) {
+                setNoEdits();
+            }
+
+            document.querySelectorAll("option").forEach(item => {
+                item.setAttribute('title', item.innerHTML)
+            });
+
+            document.querySelectorAll(".btn.css-BtnActive.upload-button").forEach(item => {
+                item.closest('td').classList.add('right-content');
+                item.closest('td').closest('tr').classList.add('right-content');
+            })
+        });
+
+        function genReport() {
+            const url          = "apex/AppealCasePop?id=" + "{!Appeal__c.Id}";
+            const reportWindow = window.open(url,'_blank');
+
+            if (window.focus) {
+                reportWindow.focus();
+            }
+
+            return false;
+        }
+
+        function completeDone() {
+            if (document.querySelector(".errorMsg") != null) {
+                alert('Please fill out all the required fields!');
+                return;
+            }
+
+            if (document.querySelector("#completeAnalysis").innerHTML.indexOf("Analysis") !== -1) {
+                if (confirm("Analysis completed."+"\n\n"+"By clicking 'OK' you are confirming that you have:"+"\n\n" +
+                    "  1. I have thoroughly reviewed the medical records for appeal judgment."+"\n\n"+
+                    "  2. Addressed the issue of a root cause.")
+                ) {
+                    if (confirm("Click 'OK' to update the appeal status and disable further editing on this bill")) {
+                        AppealDetailCtrl.updateAnalysisFields("{!Appeal__c.Id}", true, false, function(result, event) {
+                            if (event.type === 'exception') {
+                                alert (event.message);
+                            } else {
+                                setNoEdits();
+                                location.reload(true);
+                            }
+                        });
+                    }
+                }
+            } else if (document.querySelector("#completeAnalysis").innerHTML.indexOf("Overread") !== -1) {
+                if (confirm("Overrread completed."+"\n\n" +
+                    "By clicking \"Overread Complete\" you are confirming that the appeal is reviewed and ready to be sent to the client.")
+                ) {
+                    if (confirm("Click 'OK' to update the appeal")) {
+                        AppealDetailCtrl.updateAnalysisFields("{!Appeal__c.Id}", false, true, function(result, event) {
+                            if (event.type === 'exception') {
+                                alert (event.message);
+                            } else {
+                                setNoEdits();
+                                location.reload(true);
+                            }
+                        });
+
+                    }
+                }
+            }
+        }
+
+        function setNoEdits() {
+            hideEditFields();
+
+            if ("{!Appeal__c.Analysis_Complete__c}") {
+                document.querySelector("#noEdits").style = "display:inline; color:red; position: absolute; right: 270px; top: 16px;";
+
+                if ({!Appeal__c.Overread_Complete__c}) {
+                    document.querySelector("#noEdits").innerHTML = 'Overread Complete - Editing Disabled';
+                    document.querySelector("#completeAnalysis").style.display = 'none';
+                } else {
+                    document.querySelector("#completeAnalysis").innerHTML = "Overread Complete";
+                }
+            }
+        }
+
+        function save() {
+            saveRecord();
+        }
+
+        function saveAppeal() {
+            setTimeout(save, 1000);
+        }
+
+        function upload() {
+            fileUpload();
+        }
+
+        function saveAppealEnter() {
+            if (window.event.keyCode === 13) {
+                setTimeout(save, 1000);
+            }
+        }
+
+        function hideEditFields() {
+            document.querySelector(".denial-reason-text").classList.remove("hide-item");
+            document.querySelector(".denial-reason-field").classList.add("hide-item");
+
+            document.querySelector(".time-spent-text").classList.remove("hide-item");
+            document.querySelector(".time-spent-field").classList.add("hide-item");
+
+            document.querySelector(".auditor-invoice-text").classList.remove("hide-item");
+            document.querySelector(".auditor-invoice-field").classList.add("hide-item");
+
+            document.querySelector(".primary-actual-denial-reason-text").classList.remove("hide-item");
+            document.querySelector(".primary-actual-denial-reason-field").classList.add("hide-item");
+
+            document.querySelector(".secondary-actual-denial-reason-text").classList.remove("hide-item");
+            document.querySelector(".secondary-actual-denial-reason-field").classList.add("hide-item");
+
+            document.querySelector(".primary-root-cause-text").classList.remove("hide-item");
+            document.querySelector(".primary-root-cause-field").classList.add("hide-item");
+
+            document.querySelector(".secondary-root-cause-text").classList.remove("hide-item");
+            document.querySelector(".secondary-root-cause-field").classList.add("hide-item");
+
+        }
+    </script>
+
+    <div id="AppealForm">
+        <apex:sectionHeader title="Appeal Detail View" subtitle="placeholder"/>
+
+        <apex:pageBlock >
+            <apex:outputPanel id="top-line" layout="block">
+                <div class="header-style">
+                    <div class="header-style-item-1">
+                        <div class="whiteSpaceNoWrapStyle">
+                            <apex:outputText styleClass="appealCaseStyle" value="Appeal Case {!Appeal__c.Name} "/>
+                            <apex:outputLink value="{!appealViewPageRef}" id="viewlink">[View] </apex:outputLink>
+                            <apex:outputLink value="{!appealEditPageRef}" id="editlink" rendered="{!NOT(IsLimited)}"> [Edit]</apex:outputLink>
+                        </div>
+
+                        <div class="auditorStyle">
+                            <b>Project Manager:  </b>
+                            <apex:outputLink value="{!pmPage}">{!pmName}</apex:outputLink>
+                        </div>
+                    </div>
+
+                    <div class="header-style-item-2">
+                        <div class="stageRoleTypeClass">
+                            <apex:outputText value="Stage: {!Appeal__c.Appeal_Stage__c} "/>&nbsp;&nbsp;
+                            <apex:outputText value=" Type: {!Appeal__c.Appeal_Type__c}"/>
+                        </div>
+
+                        <div class="scheduledActivityStyle">
+                            <b>Next Scheduled Activity: </b>{!nextEvent}
+                            <apex:outputLink value="{!eventPage}" rendered="{!IF(nextTime != '','true', 'false')}">
+                                <b> {!nextTime}</b>
+                            </apex:outputLink>
+                        </div>
+                    </div>
+
+                    <div class="header-style-item-1">
+                        <div class="exitDateClass">
+                            <apex:outputText value="Appeal Due Date: {0,date,MM-dd-yyyy}">
+                                <apex:param value="{!Appeal__c.Appeal_Due_Date__c}"/>
+                            </apex:outputText>
+                        </div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <hr/>
+
+            <apex:pageBlockSection columns="3">
+
+                <apex:pageBlockSection columns="1">
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Client Account" styleClass="fieldNameStyle"/>
+                        <apex:outputField value="{!Appeal__c.Client_Account__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Facility" styleClass="fieldNameStyle"/>
+                        <apex:outputField value="{!Appeal__c.Facility__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Address" styleClass="fieldNameStyle"/>
+                        <div class="fieldValueStyle">{!Appeal__c.Facility__r.Facility_Street__c} <br/> {!Appeal__c.Facility__r.Facility_City__c} {!Appeal__c.Facility__r.Facility_State__c} {!Appeal__c.Facility__r.Facility_Zip__c}</div>
+                    </apex:pageBlockSectionItem>
+
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection columns="1">
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Facility Contact Primary" styleClass="fieldNameStyle"/>
+                        <apex:outputField value="{!Appeal__c.Facility_Contact_Primary__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Third Party Firm" styleClass="fieldNameStyle"/>
+                        <apex:outputLink value="{!thirdPartyFirmPage}" styleClass="{!'fieldValueStyle' + IF(isThirdPartyFirmPage, '', ' textLink')}">{!ThirdPartyFirm}</apex:outputLink>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection columns="1">
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Appeal Specialist" styleClass="fieldNameStyle"/>
+                        <apex:outputField value="{!Appeal__c.Assigned_Appeals_Specialist__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Peer to Peer Specialist" styleClass="fieldNameStyle"/>
+                        <apex:outputLink value="{!opposingAuditorPage}" styleClass="{!'fieldValueStyle' + IF(isOpposingAuditorPage, '', ' textLink')}">{!opposingAuditor}</apex:outputLink>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Overread Specialist" styleClass="fieldNameStyle"/>
+                        <apex:outputField value="{!Appeal__c.Overread_By__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Appeal Scheduler" styleClass="fieldNameStyle"/>
+                        <apex:outputLink value="{!appealSchedulerPage}" styleClass="{!'fieldValueStyle' + IF(isAppealSchedulerPage, '', ' textLink')}">{!appealScheduler}</apex:outputLink>
+                    </apex:pageBlockSectionItem>
+
+                </apex:pageBlockSection>
+
+            </apex:pageBlockSection>
+
+            <hr/>
+
+            <apex:pageBlockSection columns="3">
+
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Patient" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!Appeal__c.Patient_Last_Name__c + ', ' + Appeal__c.Patient_First_Name__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Patient Account #" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!Appeal__c.Patient_Account__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Dates of Service" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!datesOfService}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="DOB" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Patient_DOB__c == null, '(None Specified)', '{0,date,MM-dd-yyyy}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Patient_DOB__c}"/>
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Patient MR #" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Patient_MR__c == '', '(None Specified)', Appeal__c.Patient_MR__c)}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Subscriber ID" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!Appeal__c.Subscriber_ID__c}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Claim ID" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Claim_ID__c == '', '(None Specified)', Appeal__c.Claim_ID__c)}" styleClass="fieldValueStyle"/>
+                    </apex:pageBlockSectionItem>
+
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection columns="1">
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Total Billed Amount" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Total_Billed__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Total_Billed__c}"/>
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Total Denied" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Denied__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Denied__c}"/>
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Total Recovered" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Recovered__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Recovered__c}"/>
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem dataStyleClass="width-column" labelStyleClass="width-column">
+                        <apex:outputText value="Total Recovered Rate" styleClass="fieldNameStyle"/>
+                        <apex:outputText value="{!IF(Appeal__c.Total_Recovered_Rate__c == null, '(None Specified)', TEXT(Appeal__c.Total_Recovered_Rate__c) + '%')}"/>
+                    </apex:pageBlockSectionItem>
+
+                </apex:pageBlockSection>
+
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+
+        <apex:outputPanel layout="block">
+            <table class="financial-table-style" >
+                <tr class="headerTableStyle">
+                    <td>Total Billed</td>
+                    <td>Expected Reimbursement</td>
+                    <td>Total Denied</td>
+                    <td>Total Recovered</td>
+                    <td>Total Recovered Rate</td>
+                </tr>
+                <tr class="contentTableStyle">
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Total_Billed__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Total_Billed__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Expected_Reimbursement__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Expected_Reimbursement__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Denied__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Denied__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Recovered__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Recovered__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Total_Recovered_Rate__c == null, '(None Specified)', TEXT(Appeal__c.Total_Recovered_Rate__c) + '%')}" styleClass="fieldValueStyle"/>
+                    </td>
+                </tr>
+            </table>
+        </apex:outputPanel>
+        <br/>
+
+        <apex:form >
+            <apex:actionFunction name="fileUpload" action="{!upload}"/>
+            <apex:actionFunction name="saveRecord" action="{!saveAppeal}"/>
+            <apex:pageBlock >
+                <span id="noEdits" style="display: none;">&nbsp;Analysis Complete - Editing Disabled</span>
+                <button id="completeAnalysis" type="button" onclick="completeDone()"  class="analyzeButtonStyle">Analysis Complete</button>
+                <button id="appealCaseReport" type="button" onclick="genReport()" class="reportButtonStyle">Appeal Case Report</button>
+
+                <apex:pageBlockSection columns="1" title="Appeal Summary Details">
+                    <apex:pageBlockSection columns="3">
+
+                        <apex:pageBlockSection columns="1">
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Final Stage" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!Appeal__c.Appeal_Stage__c}" styleClass="fieldValueStyle"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Appeal Type" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!Appeal__c.Appeal_Type__c}"  styleClass="fieldValueStyle"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Appeal Due Date" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{0,date,MM-dd-yyyy}" styleClass="fieldValueStyle">
+                                    <apex:param value="{!Appeal__c.Appeal_Due_Date__c}"/>
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large" labelStyleClass="width-summary-column-2-small">
+                                <apex:outputText value="Payer Denial Reason" styleClass="fieldNameStyle"/>
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!Appeal__c.Denial_Reason__c}" styleClass="fieldValueStyle denial-reason-text hide-item"/>
+                                    <apex:inputField required="true" value="{!Appeal__c.Denial_Reason__c}" styleClass="inputFiledStyle fieldValueStyle denial-reason-field" onChange="saveAppeal();"/>
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+
+                        </apex:pageBlockSection>
+
+
+                        <apex:pageBlockSection columns="1">
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Payer" styleClass="fieldNameStyle"/>
+                                <apex:outputField value="{!Appeal__c.Payer__c}" styleClass="fieldValueStyle"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Payer Type" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!Appeal__c.Payer_Type__c}" styleClass="fieldValueStyle"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Time Spent / Initial Submission" styleClass="fieldNameStyle"/>
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!Appeal__c.Time_Spent_Initial_Submission__c}" styleClass="fieldValueStyle time-spent-text hide-item"/>
+                                    <apex:inputField required="true" value="{!Appeal__c.Time_Spent_Initial_Submission__c}" styleClass="inputFiledStyle fieldValueStyle time-spent-field" onKeyUp="saveAppealEnter();" onChange="saveAppeal();"/>
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1" labelStyleClass="width-summary-column-2">
+                                <apex:outputText value="Auditor Invoice #" styleClass="fieldNameStyle"/>
+
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!Appeal__c.Auditor_Invoice__c}" styleClass="fieldValueStyle auditor-invoice-text hide-item"/>
+                                    <apex:inputField required="true" value="{!Appeal__c.Auditor_Invoice__c}" styleClass="inputFiledStyle fieldValueStyle auditor-invoice-field" onKeyUp="saveAppealEnter();" onChange="saveAppeal();"/>
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+
+                        </apex:pageBlockSection>
+
+                        <apex:pageBlockSection columns="1">
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large" labelStyleClass="width-summary-column-2-small">
+                                <apex:outputText value="Denied Date" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!IF(Appeal__c.Denied_Date__c == NULL, '(None Specified)', '{0,date,MM-dd-yyyy}')}" styleClass="fieldValueStyle">
+                                    <apex:param value="{!Appeal__c.Denied_Date__c}"/>
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large" labelStyleClass="width-summary-column-2-small">
+                                <apex:outputText value="Denial Overturned Date" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!IF(Appeal__c.Denial_Overturned_Date__c == NULL, '(None Specified)', '{0,date,MM-dd-yyyy}')}" styleClass="fieldValueStyle">
+                                    <apex:param value="{!Appeal__c.Denial_Overturned_Date__c}"/>
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large" labelStyleClass="width-summary-column-2-small">
+                                <apex:outputText value="Denial Upheld Date" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!IF(Appeal__c.Denial_Upheld_Date__c == null, '(None Specified)', '{0,date,MM-dd-yyyy}')}" styleClass="fieldValueStyle">
+                                    <apex:param value="{!Appeal__c.Denial_Upheld_Date__c}"/>
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large" labelStyleClass="width-summary-column-2-small">
+                                <apex:outputText value="Payer Due Date" styleClass="fieldNameStyle"/>
+                                <apex:outputText value="{!IF(Appeal__c.Payer_Due_Date__c == null, '(None Specified)', '{0,date,MM-dd-yyyy}')}" styleClass="fieldValueStyle">
+                                    <apex:param value="{!Appeal__c.Payer_Due_Date__c}"/>
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                        </apex:pageBlockSection>
+
+                    </apex:pageBlockSection>
+
+                    <apex:pageBlockSection columns="2">
+                        <apex:pageBlockSection columns="1">
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large-multiselect" labelStyleClass="width-summary-column-2-small-multiselect">
+                                <apex:outputText value="Primary Actual Denial Reason" styleClass="fieldNameStyle"/>
+
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!IF(Appeal__c.Primary_Actual_Denial_Reason__c == null, '(None Specified)', Appeal__c.Primary_Actual_Denial_Reason__c)}" styleClass="fieldValueStyle primary-actual-denial-reason-text hide-item"/>
+                                    <apex:inputField required="true" value="{!Appeal__c.Primary_Actual_Denial_Reason__c}" styleClass="inputFiledStyle fieldValueStyle primary-actual-denial-reason-field" onChange="saveAppeal();"/>
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large-multiselect" labelStyleClass="width-summary-column-2-small-multiselect">
+                                <apex:outputText value="Secondary Actual Denial Reason" styleClass="fieldNameStyle"/>
+
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!IF(Appeal__c.Secondary_Actual_Denial_Reason__c == null, '(None Specified)', Appeal__c.Secondary_Actual_Denial_Reason__c)}" styleClass="fieldValueStyle secondary-actual-denial-reason-text hide-item"/>
+                                    <apex:inputField value="{!Appeal__c.Secondary_Actual_Denial_Reason__c}" styleClass="inputFiledStyle fieldValueStyle secondary-actual-denial-reason-field" onChange="saveAppeal();" />
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+
+                        <apex:pageBlockSection columns="1">
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large-multi-select-2" labelStyleClass="width-summary-column-2-small-multi-select-2">
+                                <apex:outputText value="Primary Root Cause" styleClass="fieldNameStyle"/>
+
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!IF(Appeal__c.Primary_Root_Cause__c == null, '(None Specified)', Appeal__c.Primary_Root_Cause__c)}" styleClass="fieldValueStyle primary-root-cause-text hide-item"/>
+                                    <apex:inputField value="{!Appeal__c.Primary_Root_Cause__c}" styleClass="inputFiledStyle fieldValueStyle primary-root-cause-field" onChange="saveAppeal();"/>
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem dataStyleClass="width-summary-column-1-large-multi-select-2" labelStyleClass="width-summary-column-2-small-multi-select-2">
+                                <apex:outputText value="Secondary Root Cause" styleClass="fieldNameStyle"/>
+
+                                <apex:outputpanel >
+                                    <apex:outputText value="{!IF(Appeal__c.Secondary_Root_Cause__c == null, '(None Specified)', Appeal__c.Secondary_Root_Cause__c)}" styleClass="fieldValueStyle secondary-root-cause-text hide-item"/>
+                                    <apex:inputField value="{!Appeal__c.Secondary_Root_Cause__c}" styleClass="inputFiledStyle fieldValueStyle secondary-root-cause-field" onChange="saveAppeal();"/>
+                                </apex:outputpanel>
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                    </apex:pageBlockSection>
+
+                </apex:pageBlockSection>
+
+            </apex:pageBlock>
+
+            <apex:pageBlock >
+                <apex:pageBlockSection title="Appeal Notes" columns="1">
+                    <apex:outputLink styleClass="btn css-BtnActive newNoteButtonStyle"
+                                     value="{!urlNewNote}">
+                        New Note
+                    </apex:outputLink>
+
+                    <apex:pageBlockTable value="{!appealNotes}" var="note">
+                        <apex:column width="20%" value="{!note.Title}"/>
+                        <apex:column width="45%" headerValue="Note" value="{!note.Body}"/>
+                        <apex:column width="15%" headerValue="Created">
+                            <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a} by ">
+                                <apex:param value="{!(note.CreatedDate + offset)}"/>
+                            </apex:outputText>
+                            <apex:outputField value="{!note.CreatedById}"/>
+                        </apex:column>
+                        <apex:column width="15%" headerValue="Last Modified">
+                            <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a} by ">
+                                <apex:param value="{!(note.LastModifiedDate + offset)}"/>
+                            </apex:outputText>
+                            <apex:outputField value="{!note.LastModifiedById}"/>
+                        </apex:column>
+                        <apex:column width="5%" styleClass="actionTableStyle">
+                            <apex:outputLink styleClass="btn css-BtnActive editNoteButtonStyle"
+                                             value="{!'/' + LEFT(note.Id, 15) + '/e?&retURL=%2Fapex%2FAppealDetail%3Fid%3D' + LEFT(Appeal__c.Id, 15) + '%26sfdc.override%3D1'}">
+                                Edit
+                            </apex:outputLink>
+                        </apex:column>
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection title="Appeal Attachments" columns="1">
+                    <apex:inputFile styleClass="btn css-BtnActive upload-button" value="{!file}" onChange="upload();" fileName="{!fileName}"/>
+
+                    <apex:outputLink styleClass="btn css-BtnActive generateButtonStyle"
+                                     value="{!urlDocumentGenerator}">
+                        Create Appeal Letter
+                    </apex:outputLink>
+
+                    <apex:pageBlockTable value="{!appealAttachments}" var="attachment">
+                        <apex:column width="20%" headerValue="Title" styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}">
+                            <apex:outputLink styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style', '')}" value="{!'/' + LEFT(attachment.Id,15)}">{!attachment.Title}</apex:outputLink>
+                        </apex:column>
+                        <apex:column width="10%" headerValue="Document Status"      value="{!attachment.Document_Type__c}" styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}"/>
+                        <apex:column width="15%" headerValue="Appeal Document Type" value="{!attachment.Letter_Type__c}"   styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}"/>
+                        <apex:column width="10%" headerValue="Document Type"        value="{!attachment.FileType}"         styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}"/>
+                        <apex:column width="20%" headerValue="Created" styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}">
+                            <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a} by ">
+                                <apex:param value="{!(attachment.CreatedDate + offset)}"/>
+                            </apex:outputText>
+                            <apex:outputField value="{!attachment.CreatedById}"/>
+                        </apex:column>
+                        <apex:column width="20%" headerValue="Last Modified" styleClass="{!if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}">
+                            <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a} by ">
+                                <apex:param value="{!(attachment.LastModifiedDate + offset)}"/>
+                            </apex:outputText>
+                            <apex:outputField value="{!attachment.LastModifiedById}"/>
+                        </apex:column>
+                        <apex:column width="5%" styleClass="{!'actionTableStyle ' + if(attachment.Document_Type__c == 'Main', 'main-doc-style-background', '')}">
+                            <apex:outputLink styleClass="btn css-BtnActive editNoteButtonStyle" onClick="window.open('{!$Page.DocumentEntryPage + '?id=' + attachment.Id}', 'Document Entry Page', 'toolbar=yes, scrollbars=yes, resizable=yes, top=300, left=610, width=950, height=380'); return false;">
+                                Edit
+                            </apex:outputLink>
+
+                        </apex:column>
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection title="Appeal Emails" columns="1">
+                    <apex:outputLink styleClass="btn css-BtnActive generateButtonStyle"
+                                     value="{!urlSendEmail}">
+                        Send Email
+                    </apex:outputLink>
+
+                    <apex:pageBlockTable value="{!appealEmails}" var="email">
+                        <apex:column width="25%" headerValue="Subject">
+                            <apex:outputLink value="{!'/' + LEFT(email.emailMessage.Id,15)}">{!email.emailMessage.Subject}</apex:outputLink>
+                        </apex:column>
+                        <apex:column width="25%" headerValue="To">
+                            <apex:repeat value="{!email.toContacts}" var="toContact">
+                                <apex:outputField value="{!toContact.Name}"/><br/>
+                                <apex:outputField value="{!toContact.Email}"/>
+                            </apex:repeat>
+                        </apex:column>
+                        <apex:column width="25%" headerValue="From">
+                            <apex:outputField value="{!email.emailMessage.FromName}"/><br/>
+                            <apex:outputField value="{!email.emailMessage.FromAddress}"/>
+                        </apex:column>
+                        <apex:column width="25%" headerValue="Created">
+                            <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a} by ">
+                                <apex:param value="{!(email.emailMessage.CreatedDate + offset)}"/>
+                            </apex:outputText>
+                            <apex:outputField value="{!email.emailMessage.CreatedById}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+</apex:page>

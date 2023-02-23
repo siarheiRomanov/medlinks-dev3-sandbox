@@ -1,0 +1,50 @@
+<template>
+
+    <div class="slds-form-element selectbox">
+        <label class="slds-form-element__label" for="combobox-id-5">Select Attachments</label>
+
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container slds-max-small-size_small">
+                <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open"
+                     aria-expanded="true" aria-haspopup="listbox" role="combobox" onmouseleave={handleLeave}>
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                        <input type="search"
+                               class="slds-input slds-combobox__input slds-has-focus slds-combobox__input-value"
+                               id="combobox-id-5" aria-controls="listbox-id-5" role="textbox"
+                               placeholder="Select an Option" readonly="" value="Please choose attachments"
+                               onclick={handleShowDropdown} style="cursor:pointer;"/>
+                        <span
+                                class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
+                            <lightning-icon icon-name="utility:down" size="x-small" aria-hidden="true"
+                                            alternative-text="drop-down" title="click to drop-down">
+                            </lightning-icon>
+                        </span>
+                    </div>
+
+                    <!-- Drop down section : Start -->
+                    <template if:true={showDropdown}>
+                        <div id="listbox-id-5" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid"
+                             role="listbox">
+                            <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+
+                                <template for:each={_allAttachments} for:item="eachValue">
+
+                                    <c-multiselect-attachments-item onadd={onAddItem}
+                                                                    onremove={onRemoveItem}
+                                                                    key={eachValue.label}
+                                                                    label={eachValue.label}
+                                                                    value={eachValue.value}
+                                                                    selected={eachValue.selected}>
+                                    </c-multiselect-attachments-item>
+
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                    <!-- Drop down section : Stop -->
+                </div>
+            </div>
+            <c-attachments-pills-container attachments-array={selectedValues} onattachremoved={handleAttachRemoved}></c-attachments-pills-container>
+        </div>
+    </div>
+</template>

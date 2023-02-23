@@ -1,0 +1,128 @@
+<apex:page Controller="CDMSearchController" showHeader="false" sidebar="false" >
+<style>
+.csh {
+		text-align: center;		
+	}
+.cstable {
+	margin-left: auto;
+	margin-right: auto;
+}
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script type="text/JavaScript">
+
+    var $j = jQuery.noConflict();
+    $j(document).ready(function(){
+        if ("{!GotCDM}" == "false") {
+        	if ("{!AskCurrent}" == "false") {
+        		alert("Search disabled because this facility has no active CDM");
+        		self.close(); 
+        	}
+        	else {
+        		if (!confirm("Facility has no CDM for item date of "+"{!ItemDate}"+". Search current CDM instead?")) {
+        			self.close();
+        		} 
+        	}
+        }
+        $j("#cdmcode").val("{!Scode}"); // preset inputs with param vals
+        $j("#cdmdesc").val("{!Sdesc}");
+        $j(document).keypress(function() {
+    		if ( event.which == 13 ) {
+     			$j("#csbut").click();
+   			}
+    	});
+        
+        searchCDM("{!Scode}", "{!Sdesc}");	// invoke initial search and table render
+    });
+    
+	function selectItem(code, desc, dept, unit) {
+		window.opener.postCDMSearch(code, desc, dept, unit);
+	}
+
+</script>
+
+<apex:pageBlock >
+	    
+	<apex:pageBlockSection showheader="false" columns="2">
+
+		<apex:outputField value="{!cdm.Facility__c}"/>				
+		<apex:pageBlockSectionItem >
+        	<apex:outputLabel value="Effective Dates" for="effective"/>
+            <apex:outputText value="{!dates}" id="effective"/> 
+        </apex:pageBlockSectionItem>
+		<apex:outputField value="{!cdm.Name}"/>			
+		<apex:outputField value="{!cdm.Item_Count__c}"/>
+	</apex:pageBlockSection>	
+</apex:pageBlock>
+
+<apex:form >
+		
+	<div id="sbox">
+		<table class="cstable">
+        	<tr>           
+		    	<th class="csh">Charge Code</th>
+		      	<th class="csh">Description</th>
+		      	<th class="csh">&nbsp;</th>
+			</tr>
+			<tr align="center">
+				<td style="padding: 0px; width: 40px"><input type="text" size="10" id="cdmcode"></input>
+				</td>
+				<td style="padding-left: 10px; padding-right: 0px; width: 100px"><input type="text" size="25" id="cdmdesc"></input>
+				</td>
+				<td>
+				<button id="csbut" type="button" onclick='searchCDM($j("#cdmcode").val(), $j("#cdmdesc").val())'>Search</button>                
+				</td>
+			</tr>
+		</table>		
+	</div>
+	<apex:actionFunction name="searchCDM" action="{!doSearch}" immediate="true" rerender="pbsearch">
+			<apex:param name="param1" assignTo="{!Scode}" value="" />
+			<apex:param name="param2" assignTo="{!Sdesc}" value="" />			
+	</apex:actionFunction>
+	<apex:pageBlock id="pbsearch">
+	
+	    <apex:outputPanel layout="block" styleClass="pSearchShowMore" id="otpNav2">
+	      Total Records Found: <apex:outputText rendered="{!IF(Con.resultSize==10000,true,false)}">10000 +</apex:outputText><apex:outputText rendered="{!IF(Con.resultSize < 10000,true,false)}">{!Con.resultSize}</apex:outputText>
+	          <apex:image url="/img/search_prevarrow_disabled.gif" styleClass="prevArrow" rendered="{!NOT(Con.HasPrevious)}"/>
+	          <apex:image url="/img/search_prevarrow.gif" title="Previous Page" styleClass="prevArrow" rendered="{!Con.HasPrevious}"/>
+	          <apex:commandLink action="{!Previous}" reRender="pbsearch" title="Previous Page" value="Previous Page" rendered="{!Con.HasPrevious}"/>
+	          <apex:outputPanel styleClass="pShowLess noLink" style="color:grey" rendered="{!NOT(Con.HasPrevious)}">Previous Page</apex:outputPanel>         
+	          &nbsp;({!IF(Con.PageNumber == 1,1,((Con.PageNumber -1) * Con.PageSize)+1)}-{!IF(Con.resultSize < Con.PageSize,Con.resultSize,Con.PageNumber * Con.pageSize)})&nbsp;
+	          <apex:outputPanel styleClass="pShowLess noLink" style="color:grey" rendered="{!NOT(Con.HasNext)}">Next Page</apex:outputPanel>         
+	          <apex:commandLink title="Next Page" value="Next Page" rendered="{!Con.HasNext}" action="{!Next}" reRender="pbsearch"/>&nbsp;
+	          <apex:image url="/img/search_nextarrow.gif" title="Next Page" styleClass="nextArrow" rendered="{!Con.HasNext}"/>
+	          <apex:image url="/img/search_nextarrow_disabled.gif" rendered="{!NOT(Con.HasNext)}"/>          
+	      </apex:outputPanel>
+	    
+	    <apex:pageBlockSection columns="1">
+	        <apex:pageBlockTable value="{!CDMItemList}" var="ci">
+	        	<apex:column headerValue="Charge Code">
+	        	<apex:outputLink value="#" onclick="selectItem('{!ci.Name}', '{!JSENCODE(ci.Billing_Description__c)}', '{!ci.Audit_Dept__r.Name}', '{!ci.Charge_Amount__c}' )">{!ci.Name}</apex:outputLink>
+	        	</apex:column> 
+	            <apex:column headerValue="Audit Dept" value="{!ci.Audit_Dept__c}"/>
+	            <apex:column headerValue="Charge Amount" value="{!ci.Charge_Amount__c}"/>	            
+	            <apex:column headerValue="Billing Description" value="{!ci.Billing_Description__c}"/>
+	            <apex:column headerValue="Charge Description" value="{!ci.Charge_Description__c}"/>
+	        </apex:pageBlockTable>
+	    </apex:pageBlockSection>
+	    
+	    <apex:outputPanel layout="block" styleClass="pSearchShowMore" id="otpNav">
+	      Total Records Found: <apex:outputText rendered="{!IF(Con.resultSize==10000,true,false)}">10000 +</apex:outputText><apex:outputText rendered="{!IF(Con.resultSize < 10000,true,false)}">{!Con.resultSize}</apex:outputText>
+	          <apex:image url="/img/search_prevarrow_disabled.gif" styleClass="prevArrow" rendered="{!NOT(Con.HasPrevious)}"/>
+	          <apex:image url="/img/search_prevarrow.gif" title="Previous Page" styleClass="prevArrow" rendered="{!Con.HasPrevious}"/>
+	          <apex:commandLink action="{!Previous}" reRender="pbsearch" title="Previous Page" value="Previous Page" rendered="{!Con.HasPrevious}"/>
+	          <apex:outputPanel styleClass="pShowLess noLink" style="color:grey" rendered="{!NOT(Con.HasPrevious)}">Previous Page</apex:outputPanel>         
+	          &nbsp;({!IF(Con.PageNumber == 1,1,((Con.PageNumber -1) * Con.PageSize)+1)}-{!IF(Con.resultSize < Con.PageSize,Con.resultSize,Con.PageNumber * Con.pageSize)})&nbsp;
+	          <apex:outputPanel styleClass="pShowLess noLink" style="color:grey" rendered="{!NOT(Con.HasNext)}">Next Page</apex:outputPanel>         
+	          <apex:commandLink title="Next Page" value="Next Page" rendered="{!Con.HasNext}" action="{!Next}" reRender="pbsearch"/>&nbsp;
+	          <apex:image url="/img/search_nextarrow.gif" title="Next Page" styleClass="nextArrow" rendered="{!Con.HasNext}"/>
+	          <apex:image url="/img/search_nextarrow_disabled.gif" rendered="{!NOT(Con.HasNext)}"/>          
+	      </apex:outputPanel>
+	
+	</apex:pageBlock>
+
+</apex:form>
+
+
+</apex:page>

@@ -1,0 +1,23 @@
+<template>
+    <lightning-layout multiple-rows="true" vertical-align="center" class="slds-p-around_small">
+
+        <lightning-layout-item size="7">
+            <div class={stepNameStyle}>{stepName}</div>
+        </lightning-layout-item>
+
+        <lightning-layout-item size="4">
+
+            <lightning-progress-bar if:true={isCurrentStep} value={progress} size="small" variant="circular"></lightning-progress-bar>
+
+            <div if:true={isStepDone} class="done-icon">
+                <p>&#x2713; Done</p>
+            </div>
+
+        </lightning-layout-item>
+
+        <lightning-layout-item if:true={isCurrentStep} size="1" class="slds-p-left_x-small">
+            <p class="progress-percent">{progress}%</p>
+        </lightning-layout-item>
+
+    </lightning-layout>
+</template>

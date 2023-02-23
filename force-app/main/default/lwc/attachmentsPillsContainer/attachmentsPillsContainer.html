@@ -1,0 +1,9 @@
+<template>
+    <lightning-layout multiple-rows vertical-align="stretch">
+        <template for:each={attachmentsArray} for:item="item" >
+            <lightning-layout-item key={item.value} class="slds-p-horizontal_medium slds-p-vertical_x-small">
+                    <c-attachment-box item-data={item}></c-attachment-box>
+            </lightning-layout-item>
+        </template>
+    </lightning-layout>
+</template>

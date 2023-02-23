@@ -1,0 +1,3 @@
+<apex:page >
+	<apex:enhancedList type="Audit__c" listID="{!$CurrentPage.parameters.listid}" customizable="false" height="450"/>
+</apex:page>

@@ -1,0 +1,24 @@
+<template>
+    <lightning-layout horizontal-align="center">
+
+        <lightning-layout-item class="slds-p-right_xx-large slds-align_absolute-center">
+            <c-progress-ring value={stepNumber}></c-progress-ring>
+        </lightning-layout-item>
+
+        <lightning-layout-item>
+            <div class="bars-panel">
+                <ul>
+                    <template for:each={progressSteps} for:item="progressStep">
+                        <li key={progressStep.stepNumber}>
+                            <c-progress-step step-name={progressStep.stepName}
+                                             step-number={stepNumber}
+                                             rendered-step={progressStep.stepNumber}>
+                            </c-progress-step>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </lightning-layout-item>
+
+    </lightning-layout>
+</template>

@@ -1,0 +1,45 @@
+.ring, .ring svg {
+    width: 260px;
+    height: 260px;
+}
+
+circle {
+    position: absolute;
+    fill: none;
+    stroke-width: 8;
+    transform-origin: center;
+    transform: rotate(-90deg) translate(6px, 6px);
+    stroke-dasharray: 785;
+    stroke-linecap: round;
+}
+
+circle:nth-child(1) {
+    stroke-dashoffset: 0;
+    stroke: #dddbda;
+}
+
+.ring circle:nth-child(2) {
+    stroke-dashoffset: calc(785 - (785 * 0) / 100);
+    stroke: #005FB2;
+}
+
+.number {
+    position: relative;
+    width: 260px;
+    transform-origin: center;
+    transform: translateY(-174px);
+    color: #005FB2;
+}
+
+h2 {
+    font-size: 56px;
+}
+
+span {
+    font-size: 30px;
+    opacity: .7;
+}
+
+.ring span {
+    color: #005FB2;
+}

@@ -1,0 +1,313 @@
+<template>
+    <lightning-spinner alternative-text="Loading" size="large" if:true={showSpinner}></lightning-spinner>
+    <div class="slds-grid">
+        <div class="slds-size_7-of-12">
+            <div class="slds-align_absolute-center slds-m-top_medium">
+                <img src={imageUrl} onclick={previewHandler} style="max-width: 95%; border-radius: 25px; max-height: 45vh"/>
+            </div>
+        </div>
+            <div class="slds-size_5-of-12 slds-align-top" style="max-height: 45vh;">
+
+            <div class="slds-m-around_small slds-text-body_regular slds-grid">
+                <div class="slds-size_6-of-12">
+                    <p style="font-size: 18px;">There you can download a basic template and get API names for fields.</p>
+                </div>
+                <div class="slds-size_6-of-12" style="text-align: right;">
+                    <a href={templateUrl} style="display: inline-block; text-decoration: none;">
+                        <lightning-button variant="brand-outline"
+                                          aria-label="Download Basic Template"
+                                          icon-name="utility:download"
+                                          label="Download Basic Template"
+                                          icon-position="right"
+                        ></lightning-button>
+                    </a>
+                </div>
+            </div>
+
+            <div style="max-height: 40vh;overflow-y: scroll;">
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large slds-m-top_none">
+                    <c-combobox-autocomplete label="Select Appeal field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleAppealOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="Appeal__c:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="appeal-to-copy input-width slds-input" value={selectedAppealField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".appeal-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large slds-m-top_none">
+                    <c-combobox-autocomplete label="Select Facility Account field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleFacilityAccountOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="Facility:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="facility-account-to-copy input-width slds-input" value={selectedFacilityAccountField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".facility-account-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large slds-m-top_none">
+                    <c-combobox-autocomplete label="Select Client Account field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleClientAccountOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="ClientAccount:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="client-account-to-copy input-width slds-input" value={selectedClientAccountField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".client-account-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large slds-m-top_none">
+                    <c-combobox-autocomplete label="Select Payer Account field"
+                                             placeholder="Select an option"
+                                             onselectoption={handlePayerAccountOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="Payer:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="payer-account-to-copy input-width slds-input" value={selectedPayerAccountField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".payer-account-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div if:true={existThirdPartyFirm}>
+                    <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                        <c-combobox-autocomplete label          = "Select Third Party Firm Account field"
+                                                 placeholder    = "Select an option"
+                                                 onselectoption = {handleThirdPartyFirmOptionChange}
+                                                 classes        = "slds-m-bottom_small"
+                                                 record-id      = {recordId}
+                                                 search-element = "ThirdPartyFirm:"
+                        ></c-combobox-autocomplete>
+
+                        <div>
+                            <p>Selected field:</p>
+                            <div class="container-selected-field slds-is-relative">
+                                <input disabled class="third-party-firm-account-to-copy input-width slds-input" value={selectedThirdPartyFirmAccountField} />
+                                <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".third-party-firm-account-to-copy">
+                                    <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                    <span class="slds-assistive-text">Copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                    <c-combobox-autocomplete label="Select Overread Contact field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleOverreadContactOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="OverreadSpecialist:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="overread-contact-to-copy input-width slds-input" value={selectedOverreadContactField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".overread-contact-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                    <c-combobox-autocomplete label="Select Facility Primary Contact field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleFacilityPrimaryContactOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="FacilityPrimary:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="facility-primary-contact-to-copy input-width slds-input" value={selectedFacilityPrimaryContactField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".facility-primary-contact-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div if:true={existOpposingScheduler}>
+                    <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                        <c-combobox-autocomplete label="Select Peer To Peer Scheduler Contact field"
+                                                 placeholder="Select an option"
+                                                 onselectoption={handleOpposingSchedulerContactOptionChange}
+                                                 classes="slds-m-bottom_small"
+                                                 record-id={recordId}
+                                                 search-element="PeerToPeerScheduler:"
+                        ></c-combobox-autocomplete>
+
+                        <div>
+                            <p>Selected field:</p>
+                            <div class="container-selected-field slds-is-relative">
+                                <input disabled class="opposing-scheduler-contact-to-copy input-width slds-input" value={selectedOpposingSchedulerContactField} />
+                                <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".opposing-scheduler-contact-to-copy">
+                                    <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                    <span class="slds-assistive-text">Copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div if:true={existOpposingSpecialist}>
+                    <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                        <c-combobox-autocomplete label="Select Peer To Peer Specialist Contact field"
+                                                 placeholder="Select an option"
+                                                 onselectoption={handleOpposingSpecialistContactOptionChange}
+                                                 classes="slds-m-bottom_small"
+                                                 record-id={recordId}
+                                                 search-element="PeerToPeerSpecialist:"
+                        ></c-combobox-autocomplete>
+
+                        <div>
+                            <p>Selected field:</p>
+                            <div class="container-selected-field slds-is-relative">
+                                <input disabled class="opposing-specialist-contact-to-copy input-width slds-input" value={selectedOpposingSpecialistContactField} />
+                                <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".opposing-specialist-contact-to-copy">
+                                    <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                    <span class="slds-assistive-text">Copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div if:true={existAppealScheduler}>
+                    <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                        <c-combobox-autocomplete label="Select Appeal Scheduler User field"
+                                                 placeholder="Select an option"
+                                                 onselectoption={handleAppealSchedulerUserOptionChange}
+                                                 classes="slds-m-bottom_small"
+                                                 record-id={recordId}
+                                                 search-element="AppealScheduler:"
+                        ></c-combobox-autocomplete>
+
+                        <div>
+                            <p>Selected field:</p>
+                            <div class="container-selected-field slds-is-relative">
+                                <input disabled class="appeal-scheduler-user-to-copy input-width slds-input" value={selectedAppealSchedulerUserField} />
+                                <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".appeal-scheduler-user-to-copy">
+                                    <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                    <span class="slds-assistive-text">Copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                    <c-combobox-autocomplete label="Select Assigned PM User field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleAssignedPMUserOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="AssignedPM:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="assigned-pm-user-to-copy input-width slds-input" value={selectedAssignedPMUserField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".assigned-pm-user-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                    <c-combobox-autocomplete label="Select Appeal Specialist User field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleAppealSpecialistUserOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="AppealSpecialist:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="appeal-specialist-user-to-copy input-width slds-input" value={selectedAppealSpecialistUserField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".appeal-specialist-user-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-m-horizontal_small slds-m-bottom_x-large">
+                    <c-combobox-autocomplete label="Select Note field"
+                                             placeholder="Select an option"
+                                             onselectoption={handleNoteOptionChange}
+                                             classes="slds-m-bottom_small"
+                                             record-id={recordId}
+                                             search-element="Note:"
+                    ></c-combobox-autocomplete>
+
+                    <div>
+                        <p>Selected field:</p>
+                        <div class="container-selected-field slds-is-relative">
+                            <input disabled class="note-to-copy input-width slds-input" value={selectedNoteField} />
+                            <button class="slds-button slds-button_icon slds-is-absolute icon-copy" title="Copy" onclick={copyToClipboard} data-label=".note-to-copy">
+                                <lightning-icon icon-name="utility:copy" size="small"></lightning-icon>
+                                <span class="slds-assistive-text">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</template>

@@ -1,0 +1,12 @@
+<aura:component description="test" implements="flexipage:availableForAllPageTypes" access="global">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="statItems" access="global" type="Object[]"/>
+    <aura:iteration items="{!v.statItems}" var="item">
+        {!item.count}
+        {!item.label}
+    </aura:iteration>
+
+    
+    {!v.body}
+
+</aura:component>

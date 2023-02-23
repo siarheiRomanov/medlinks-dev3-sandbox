@@ -1,0 +1,82 @@
+<!--
+ - Created by eklygunov on 12/21/2021.
+ -->
+
+<!-- File Uploader -->
+
+<template>
+    <div class="slds-m-around_medium">
+        <span style="font-size: 14px;">
+            Click <strong>Upload files</strong> button to upload your template.
+        </span>
+        <br/>
+        <span style="font-size: 14px;">
+            You can save uploaded template to templates folder by clicking <strong>Save</strong> button.
+        </span>
+    </div>
+
+    <template if:false={fileData}>    
+        <lightning-layout class="slds-p-horizontal_medium">
+            <lightning-layout-item class="slds-align_absolute-center fileClass" size="12" >        
+                <lightning-input type="file"
+                                    accept=".docx"                                
+                                    onchange={openFileUpload}                                        
+                ></lightning-input>        
+            </lightning-layout-item>
+        </lightning-layout>       
+   </template>
+
+    <template if:true={fileData}>
+        <lightning-layout horizontal-align="spread" class="slds-m-horizontal_medium layout-file-data" vertical-align="center">
+            <lightning-layout-item class="slds-p-around_medium">
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col"><lightning-icon icon-name="doctype:image" size="large" title="Image"></lightning-icon></div>
+                    <div class="slds-col file-data">                   
+                        <strong>{fileData.filename}</strong>                    
+                        <div class="file-add-data">
+                            {fileData.filelastModifiedDate}
+                            <span> | </span>
+                            {fileData.filetype}
+                            <span> | </span>
+                            {fileData.filesize}
+                        </div> 
+                    </div>
+                </div>
+            </lightning-layout-item>           
+
+            <lightning-layout-item alignment-bump="left" class="slds-p-around_medium">
+                <div class="slds-p-around_medium slds-text-align_center">                   
+                    <lightning-button variant="base"
+                                    label="Remove File"
+                                    title="Remove File"
+                                    onclick={handleClickRemove}
+                                    disabled={isDisabled}
+                                    class="btn-remove"
+                    ></lightning-button>
+                </div>
+            </lightning-layout-item>
+
+            <lightning-layout-item class="slds-p-around_medium" >                
+                <div if:false={isSaved} class="slds-p-around_medium slds-text-align_center">
+                    <lightning-button variant="brand-outline"
+                                    label="Save as Template"
+                                    title="Save as Template"
+                                    onclick={handleClickSave}
+                                    disabled={isDisabled}
+                                    class="btn-save"
+                    ></lightning-button>
+                </div> 
+                <div if:true={isSaved} >                    
+                    <button class="btn-file-saved" >                        
+                        <span class="icon">
+                            <svg width="13" height="17" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 3L5.71429 7.5L12 1.5" stroke="#34AA79" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>                       
+                        <span>File Saved in the Templates List</span>                                               
+                    </button>
+                </div>               
+            </lightning-layout-item>
+        </lightning-layout>
+    </template>    
+</template>

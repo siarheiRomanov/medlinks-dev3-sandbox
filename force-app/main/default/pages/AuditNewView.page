@@ -1,0 +1,3 @@
+<apex:page standardController="Audit__c" showHeader="true" tabStyle="Audit__c" >
+    <apex:detail subject="{!Audit__c.Id}" relatedList="true" title="true" showChatter="true" />
+</apex:page>

@@ -1,0 +1,66 @@
+.document-name {
+    font-weight: bold;
+    font-size: 16px;
+    font: "Roboto";
+}
+
+.document-date-size {
+    color: grey;
+    font-weight: normal;
+    margin-top: 2px;
+}
+
+.download-icon {
+    --lwc-colorTextIconDefault: rgb(1, 118, 211);
+}
+
+.div_hover:hover {
+    background-color: #ECEBEA;
+}
+
+.div_template {
+    border-radius: 3px;
+    padding: 7px;
+}
+
+hr.divider {
+    margin: 0em;
+    border-width: 2px;
+}
+
+.preview-button, .edit-button, .check-button, .cancel-button {
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+.header {
+    font-size: 22px;
+    font-weight: 400;
+    font: "Roboto";
+}
+
+.utility-icon, .check-icon, .cancel-icon {
+    --lwc-colorTextIconDefault: #b9b6b6;
+}
+
+.check-icon:hover {
+    --lwc-colorTextIconDefault: green;
+}
+
+.cancel-icon:hover {
+    --lwc-colorTextIconDefault: red;
+}
+
+.utility-icon:hover {
+    --lwc-colorTextIconDefault: rgb(53, 93, 150);
+}
+
+.selected {
+    background-color: #dedcdc;
+    border: 1px solid lightgray;
+}
+
+.number-of-templates {
+    color: grey;
+}

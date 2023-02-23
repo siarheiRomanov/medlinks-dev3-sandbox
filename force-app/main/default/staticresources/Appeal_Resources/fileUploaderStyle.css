@@ -1,0 +1,25 @@
+.fileClass .slds-form-element{
+    width:100% !important;
+}
+ 
+.fileClass.slds-form-element__control {  
+    width: 100% !important;
+}
+  
+.fileClass .slds-file-selector{
+    width:100% !important;
+}
+
+.fileClass .slds-file-selector__dropzone{
+    width:100% !important;
+}
+
+
+.fileClass .slds-file-selector__dropzone slot{
+    display: flex;
+    justify-content: center;
+    margin: 25px 0;
+}
+
+
+

@@ -1,0 +1,574 @@
+<apex:page id="AppealCaseReport" standardController="Appeal__c" extensions="AppealCasePopCtrl" showHeader="false" applyHtmlTag="false" renderAs="pdf">
+    <head>
+        <!-- renderAs="pdf"  -->
+        <style type="text/css">
+            @page {
+
+                /* Landscape orientation */
+                size:landscape;
+                margin-top: 1.8cm;
+                margin-left: .6cm;
+                margin-right: .8cm;
+                font-family: Arial Unicode MS;
+                padding: 0;
+
+                @top-left {
+                    background-repeat: no-repeat;
+                    background-postion: left bottom;
+                    margin-bottom: 0;
+
+                }
+
+                @top-center {
+                    content: "Appeal Case Detail Report";
+                    font-family: Arial Unicode MS;
+                    font-size: 12pt;
+                    font-weight: bold;
+                    vertical-align: middle;
+                    margin-bottom: 0;
+                    white-space: pre;
+
+                }
+
+                @top-right {
+                    content: "Case ID: " "{!Appeal__c.Name}";
+                    font-family: Arial Unicode MS;
+                    font-size: 12pt;
+                    font-weight: bold;
+                    vertical-align: middle;
+                    margin-bottom: 0;
+                }
+
+                @bottom-left {
+                    content: "CONFIDENTIAL"
+                }
+
+                @bottom-center {
+                    content: "™ " "Claim WRX" " 2022-" "{!YEAR(TODAY())}" " All Rights Reserved";
+                    font-size: 8pt;
+                    white-space: pre;
+                }
+
+                /* Put page numbers in the bottom right corner of each
+                page in the pdf document. */
+                @bottom-right {
+                    content: "Page "  counter(page) " of " counter(pages);
+                }
+
+            }
+
+            body {
+                font-family: Arial Unicode MS;
+                font-size: 10pt;
+                padding: 0;
+            }
+
+            .contentTable {
+                width: 100%;
+                margin-top: 10px;
+                margin-left: 0;
+                margin-right: 0;
+                margin-bottom: 0;
+                padding-top: 0;
+                border-collapse: collapse;
+            }
+            .sumTable {
+                width: 100%;
+                margin-top: 20px;
+                margin-left: 0;
+                margin-right: 0;
+                margin-bottom: 0;
+                padding-top: 0;
+                border-collapse: collapse;
+            }
+
+            .noteTable {
+                width: 100%;
+                margin-top: 0;
+                margin-left: 0;
+                margin-right: 0;
+                margin-bottom: 0;
+                padding-top: 0;
+                border-collapse: collapse;
+                -fs-table-paginate: paginate;
+                border-spacing: 0;
+            }
+
+            .tdLabel {
+                text-align: right;
+                vertical-align: top;
+            }
+
+            .tdValue {
+                text-align: left;
+                vertical-align: top;
+            }
+
+            .headTableStyle {
+                text-align: center;
+                background-color: #B9E1FF
+            }
+
+            .bodyTableStyle {
+                text-align: right;
+                vertical-align: top;
+            }
+
+            .alarmText {
+                font-size: 8pt;
+            }
+
+            .signature {
+                font-size: 9pt;
+                margin-top: 5px
+            }
+
+            .noteStyle {
+                vertical-align: top;
+            }
+
+            .titleLabel {
+                font-family: Arial Unicode MS;
+                font-size: 12pt;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .bold-format {
+                font-family: sans-serif;
+                font-weight:bold;
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <div>
+            <table class="contentTable">
+                <tr>
+                    <td class="tdLabel" width="13%">
+                        <b>Client Account:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="22%">
+                        <apex:outputField value="{!Appeal__c.Client_Account__r.Name}"/>
+                    </td>
+
+                    <td class="tdLabel" width="18%">
+                        <b>Facility Contact Primary:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="12%">
+                        <apex:outputText value="{!IF(Appeal__c.Facility_Contact_Primary__r.Name == NULL, '(None Specified)', Appeal__c.Facility_Contact_Primary__r.Name)}"/>
+                    </td>
+
+                    <td class="tdLabel" width="20%">
+                        <b>Appeal Specialist:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="15%">
+                        <apex:outputText value="{!IF(Appeal__c.Assigned_Appeals_Specialist__r.Name == NULL, 'NOT ASSIGNED', Appeal__c.Assigned_Appeals_Specialist__r.Name)}"/>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel">
+                        <b>Facility:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputField value="{!Appeal__c.Facility__r.Name}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Third Party Firm:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Third_Party_Firm__r.Name == NULL, '(None Specified)', Appeal__c.Third_Party_Firm__r.Name)}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Peer to Peer Specialist:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Opposing_Appeals_Specialist__r.Name == NULL, '(None Specified)', Appeal__c.Opposing_Appeals_Specialist__r.Name)}"/>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel">
+                        <b>Address:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <div class="fieldValueStyle">{!Appeal__c.Facility__r.Facility_Street__c} <br/> {!Appeal__c.Facility__r.Facility_City__c} {!Appeal__c.Facility__r.Facility_State__c} {!Appeal__c.Facility__r.Facility_Zip__c}</div>
+                    </td>
+
+                    <td class="tdLabel"></td>
+                    <td class="tdValue"></td>
+
+                    <td class="tdLabel">
+                        <b>Overread Specialist:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Overread_By__r.Name == NULL, '(None Specified)', Appeal__c.Overread_By__r.Name)}"/>
+                    </td>
+                </tr>
+            </table>
+
+            <hr/>
+
+            <table class="contentTable">
+                <tr>
+                    <td class="tdLabel" width="13%">
+                        <b>Patient:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="22%">
+                        <apex:outputText value="{!Appeal__c.Patient_Last_Name__c + ', ' + Appeal__c.Patient_First_Name__c}"/>
+                    </td>
+
+                    <td class="tdLabel" width="17.5%">
+                        <b>DOB:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="12.5%">
+                        <apex:outputText value="{!IF(Appeal__c.Patient_DOB__c == null, '(None Specified)', '{0,date,MM-dd-yyyy}')}">
+                            <apex:param value="{!Appeal__c.Patient_DOB__c}"/>
+                        </apex:outputText>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Total Billed Amount:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Total_Billed__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Total_Billed__c}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel">
+                        <b>Patient Account #:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!Appeal__c.Patient_Account__c}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Patient MR #:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Patient_MR__c == '', '(None Specified)', Appeal__c.Patient_MR__c)}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Total Denied:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Denied__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Denied__c}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel">
+                        <b>Dates of Service:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{0,date,MM-dd-yyyy} ">
+                            <apex:Param value="{!Appeal__c.Service_Start_Date__c}"/>
+                        </apex:outputText>
+                        to
+                        <apex:outputText value=" {0,date,MM-dd-yyyy}">
+                            <apex:Param value="{!Appeal__c.Service_End_Date__c}"/>
+                        </apex:outputText>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Subscriber ID:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!Appeal__c.Subscriber_ID__c}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Total Recovered:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Recovered__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Recovered__c}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel"></td>
+                    <td class="tdValue"></td>
+
+                    <td class="tdLabel">
+                        <b>Claim ID:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Claim_ID__c == '', '(None Specified)', Appeal__c.Claim_ID__c)}" styleClass="fieldValueStyle"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Total Recovered Rate:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Total_Recovered_Rate__c == null, '(None Specified)', TEXT(Appeal__c.Total_Recovered_Rate__c) + '%')}" styleClass="fieldValueStyle"/>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+
+        <apex:outputPanel id="totals" layout="block">
+            <table frame="box" border="1" width="100%" class="sumTable">
+                <tr class="headTableStyle">
+                    <td>Total Billed</td>
+                    <td>Expected Reimbursement</td>
+                    <td>Total Denied</td>
+                    <td>Total Recovered</td>
+                    <td>Total Recovered Rate</td>
+                </tr>
+                <tr class="bodyTableStyle">
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Total_Billed__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Total_Billed__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Expected_Reimbursement__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Expected_Reimbursement__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Denied__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Denied__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Recovered__c == null, '(None Specified)', '{0, number, $##,###,##0.00}')}" styleClass="fieldValueStyle">
+                            <apex:param value="{!Appeal__c.Recovered__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{!IF(Appeal__c.Total_Recovered_Rate__c == null, '(None Specified)', TEXT(Appeal__c.Total_Recovered_Rate__c) + '%')}" styleClass="fieldValueStyle"/>
+                    </td>
+                </tr>
+            </table>
+        </apex:outputPanel>
+
+        <div>
+            <h3 class="titleLabel">Appeal Summary Details</h3>
+
+            <table class="contentTable">
+                <tr>
+                    <td class="tdLabel" width="15%">
+                        <b>Final Stage:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="14%">
+                        <apex:outputField value="{!Appeal__c.Appeal_Stage__c}"/>
+                    </td>
+
+                    <td class="tdLabel" width="16%">
+                        <b>Payer:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="15%">
+                        <apex:outputText value="{!IF(Appeal__c.Payer__r.Name == NULL, '(None Specified)', Appeal__c.Payer__r.Name)}"/>
+                    </td>
+
+                    <td class="tdLabel" width="16%">
+                        <b>Denied Date:&nbsp;</b>
+                    </td>
+                    <td class="tdValue" width="24%">
+                        <apex:outputText value="{!IF(Appeal__c.Denied_Date__c == NULL, '(None Specified)', '{0,date,MM-dd-yyyy}')}">
+                            <apex:param value="{!Appeal__c.Denied_Date__c}"/>
+                        </apex:outputText>
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td class="tdLabel">
+                        <b>Appeal Type:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputField value="{!Appeal__c.Appeal_Type__c}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Payer Type:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputField value="{!Appeal__c.Payer_Type__c}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <b>Denial Overturned Date:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Denial_Overturned_Date__c == NULL, '(None Specified)', '{0,date,MM-dd-yyyy}')}">
+                            <apex:param value="{!Appeal__c.Denial_Overturned_Date__c}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel">
+                        <b>Appeal Due Date:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{0,date,MM-dd-yyyy}">
+                            <apex:param value="{!Appeal__c.Appeal_Due_Date__c}"/>
+                        </apex:outputText>
+                    </td>
+
+                    <td class="tdLabel"></td>
+                    <td class="tdValue"></td>
+
+                    <td class="tdLabel">
+                        <b>Denial Upheld Date:&nbsp;</b>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Denial_Upheld_Date__c == NULL, '(None Specified)', '{0,date,MM-dd-yyyy}')}">
+                            <apex:param value="{!Appeal__c.Denial_Upheld_Date__c}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+
+                <br/>
+
+                <tr>
+                    <td class="tdLabel">
+                        <span class="bold-format">Payer Denial Reason:&nbsp;</span>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Denial_Reason__c == NULL, '(None Specified)', Appeal__c.Denial_Reason__c)}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <span class="bold-format">Primary Actual Denial&nbsp; Reason:&nbsp;</span>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Primary_Actual_Denial_Reason__c == null, '(None Specified)', Appeal__c.Primary_Actual_Denial_Reason__c)}"/>
+                    </td>
+
+                    <td class="tdLabel">
+                        <span class="bold-format">Primary Root Cause:&nbsp;</span>
+                    </td>
+                    <td class="tdValue">
+                        <apex:outputText value="{!IF(Appeal__c.Primary_Root_Cause__c == null, '(None Specified)', Appeal__c.Primary_Root_Cause__c)}"/>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tdLabel" width="15%"></td>
+                    <td class="tdValue" width="14%"></td>
+
+                    <td class="tdLabel" width="16%">
+                        <span class="bold-format">Secondary Actual&nbsp; Denial Reason:&nbsp;</span>
+                    </td>
+                    <td class="tdValue" width="15%">
+                        <apex:outputText value="{!IF(Appeal__c.Secondary_Actual_Denial_Reason__c == null, '(None Specified)', Appeal__c.Secondary_Actual_Denial_Reason__c)}"/>
+                    </td>
+
+                    <td class="tdLabel" width="16%">
+                        <span class="bold-format">Secondary Root&nbsp; Cause:&nbsp;</span>
+                    </td>
+                    <td class="tdValue" width="24%">
+                        <apex:outputText value="{!IF(Appeal__c.Secondary_Root_Cause__c == null, '(None Specified)', Appeal__c.Secondary_Root_Cause__c)}"/>
+                    </td>
+                </tr>
+
+
+            </table>
+        </div>
+
+
+        <div>
+            <h3 class="titleLabel">Appeal Notes</h3>
+
+            <table frame="box" border="1" class="noteTable">
+                <thead>
+                    <tr class="headTableStyle">
+                        <th width="20%">
+                            <b>Title</b>
+                        </th>
+
+                        <th width="40%">
+                            <b>Note</b>
+                        </th>
+
+                        <th width="20%">
+                            <b>Created</b>
+                        </th>
+
+                        <th width="20%">
+                            <b>Last Modified</b>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <apex:repeat value="{!appealNotes}" var="note">
+                        <tr class="noteStyle">
+                            <td>
+                                <apex:outputField value="{!note.Title}"/>
+                            </td>
+
+                            <td>
+                                <apex:outputField value="{!note.Body}"/>
+                            </td>
+
+                            <td>
+                                <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a}">
+                                    <apex:param value="{!(note.CreatedDate + offset)}"/>
+                                </apex:outputText><br/>
+                                <apex:outputText value=" by "/>
+                                <apex:outputField value="{!note.CreatedBy.Name}"/>
+                            </td>
+
+                            <td>
+                                <apex:outputText value="{0,date,MM-dd-yyyy, h:mm a}">
+                                    <apex:param value="{!(note.LastModifiedDate + offset)}"/>
+                                </apex:outputText><br/>
+                                <apex:outputText value=" by "/>
+                                <apex:outputField value="{!note.LastModifiedBy.Name}"/>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+
+            <br/>
+            <apex:outputLink value="{!'/apex/AppealNewView?id=' + Appeal__c.Id + '#' + LEFT(Appeal__c.Id, 15) + '_RelatedNoteList_target'}">
+                Notes And Attachments
+            </apex:outputLink>
+        </div>
+
+        <div width="100%">
+            <span class="alarmText">
+                <br/>The undersigned are in full agreement with the findings summarized in this Appeal Report.
+                Items not listed are correctly billed and require no adjustments.
+            </span>
+            <table width="100%" class="signature">
+                <tr>
+                    <td>Hospital:&nbsp;</td>
+                    <td>Signature _____________________________</td>
+                    <td>Title ____________________</td>
+                    <td>&nbsp;&nbsp;</td>
+                    <td>Carrier:&nbsp;</td>
+                    <td>Signature _____________________________</td>
+                    <td>Title ____________________</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>Name ________________________________</td>
+                    <td>Date ____________________</td>
+                    <td>&nbsp;&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>Name ________________________________</td>
+                    <td>Date ____________________</td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</apex:page>

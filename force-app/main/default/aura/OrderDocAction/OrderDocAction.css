@@ -1,0 +1,11 @@
+.THIS .custom_css {
+    pointer-events: none;
+}
+
+.THIS .btn-next {
+    margin: 0.75rem 20px 0 10px;
+}
+
+.THIS .btn-finish {
+    margin: 0.75rem 10px 0 10px;
+}

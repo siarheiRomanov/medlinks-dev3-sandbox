@@ -1,0 +1,11 @@
+<!-- Choose Letter Type -->
+<template>
+    <lightning-spinner alternative-text="Loading" size="large" if:true={showSpinner}></lightning-spinner>
+    <lightning-combobox
+            name        = "letterType"
+            label       = "Letter Type"
+            value       = {value}
+            placeholder = "Select Letter Type..."
+            options     = {options}
+            onchange    = {handleChange}></lightning-combobox>
+</template>

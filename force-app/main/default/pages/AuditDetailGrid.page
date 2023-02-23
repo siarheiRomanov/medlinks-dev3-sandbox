@@ -1,0 +1,1870 @@
+<apex:page standardController="Audit__c" extensions="AuditDetailGridExt" showHeader="true" tabStyle="Audit__c" Id="gpage" >
+
+<!-- 
+History:
+8/2012 SBower.  Added various code to manage loading, saving, and editing the Annotation field on the AuditItem.
+
+
+ -->
+<style>
+    .activeTab {font-size: 120%; background-color: #1797C0; color:white; background-image:none}
+    .inactiveTab {font-size: 120%; background-color: #F8F8F8; color:black; background-image:none}
+    .inactiveTab:hover {background-color: #FFFFFF;}
+    .aihh {
+        text-align: center;     
+    }
+    .stackd {
+        position: absolute; top: 0; left: 0;
+    }
+
+</style>
+<link rel="STYLESHEET" type="text/css" href="{!URLFOR($Resource.DHTMLXgrid,'codebase/dhtmlxgrid.css')}"></link>
+<link rel="STYLESHEET" type="text/css" href="{!URLFOR($Resource.DHTMLXgrid,'codebase/skins/dhtmlxgrid_dhx_blue.css')}"></link>
+<link rel="STYLESHEET" type="text/css" href="{!URLFOR($Resource.DHTMLXgrid,'codebase/skins/dhtmlxgrid_dhx_skyblue.css')}"></link>
+<link rel="STYLESHEET" type="text/css" href="{!URLFOR($Resource.DHTMLXmenu,'codebase/skins/dhtmlxmenu_dhx_skyblue.css')}"></link>
+
+<!--  Overriding the "txt" coltype to put the popup in the middle of the screen instead of where the column is. -->
+<!--  8/2012 SBower. -->
+<style>
+    div.dhx_textarea {
+        position: absolute !important; 
+        top: 25% !important; left: 25% !important; 
+        width: 50% !important; height: 50% !important;
+    } 
+    textarea.dhx_textarea {
+        width: 100% !important; height: 100% !important;
+    }   
+
+</style>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/dhtmlxcommon.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/dhtmlxgrid.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/dhtmlxgridcell.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/ext/dhtmlxgrid_json.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/ext/dhtmlxgrid_fast.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/ext/dhtmlxgrid_filter.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/ext/dhtmlxgrid_group.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/ext/dhtmlxgrid_nxml.js')}"></script>
+<script src="{!URLFOR($Resource.DHTMLXgrid,'codebase/excells/dhtmlxgrid_excell_link.js')}"></script>
+
+<script src="{!URLFOR($Resource.DHTMLXmenu,'codebase/dhtmlxmenu.js')}"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/JavaScript">
+    var theBillGrid;
+    var xmenu;
+    var CDMWin;
+    var CDMsch;
+    var gridload = false;
+    var aiInit = false;
+    var doedit = true;
+    var firstitem = false;
+    var addingUn = true;
+    var TotalBilled = {!Audit__c.TAmt_Billed__c};
+    var TotalAuditAmt = {!Audit__c.Audit_Amount__c};
+    var aiUCost;
+    var aiBQty;
+    var aiBTot;
+    var aiGoodRec = false;
+    var aiGoodNums = false;
+    var nobody = false;
+    var nextRowID = 1;
+    var gfpix, gfspin;
+    var selidx;        
+    var C_edit = 0;
+    var C_err = 1;
+    var C_date = 2;
+    var C_dept = 3;
+    var C_chg = 4;
+    var C_desc = 5;
+    var C_rc = 6;
+    var C_ucost = 7;
+    var C_qbill = 8;
+    var C_qmr = 9;
+    var C_qrev = 10;
+    var C_code = 11;
+    var C_abill = 12;
+    var C_aadj = 13;
+    var C_qdis = 14; // Revised 1/5/12
+    var C_adis = 15;
+    var C_Annotation = 16;
+    
+    var $j = jQuery.noConflict();
+    $j(document).ready(function(){
+        $j('.pageDescription').replaceWith("<h2 class=\"pageDescription\"><a href=\"{!URLFOR($Action.Account.View, AcctId)}\">{!AcctName}</a></h2>");
+        InitGrids();
+        gfpix = new Image();
+        gfpix.src = "{!URLFOR($Resource.pixgif)}";
+        gfspin = new Image();
+        gfspin.src = "{!URLFOR($Resource.spingif)}";
+    });
+    
+ function InitGrids() {
+ 
+    var it = document.getElementById("gpage:topblock:titems").innerHTML;
+    if (it == "0") { // No items?
+        document.getElementById("BillGrid").innerHTML = "<span style=\"font-weight:bold; color:red;\">Bill Not Uploaded<\span>";
+        $j("#gridtools").attr("style", "visibility:hidden");
+        firstitem=true;
+        return;
+    }
+    else if ("{!Audit__c.Bill_Analysis_Complete__c}" == "true") {
+        setNoEdits();   
+    }
+    xstr = "<menu><item id=\"O\" text=\"O - Not in MR\"/><item id=\"N\" text=\"N - No MD Order\"/><item id=\"C\" text=\"C - Contractually Disallowed\"/>";
+    xstr += "<item id=\"A\" text=\"A - Appealed\"/><item id=\"Z\" text=\"Z - Other (NOTE REQUIRED)\"/><item id=\"M\" text=\"Miscellaneous\"><item id=\"1\" text=\"1 - Professional Fee(s)\"/>"; 
+    xstr += "<item id=\"2\" text=\"2 - Technical Component Fee(s)\"/><item id=\"3\" text=\"3 - Bundled/UnBundled\"/><item id=\"4\" text=\"4 - Client Directive/Specifications\"/>";
+    xstr += "<item id=\"5\" text=\"5 - CMS Guidelines\"/><item id=\"6\" text=\"6 - Investigational/Focused\"/><item id=\"7\" text=\"7 - Split bill\"/>";
+    xstr += "<item id=\"8\" text=\"8 - Business Office Request\"/><item id=\"9\" text=\"9 - Gender Specific Charge\"/><item id=\"0\" text=\"0 - Level Discrepancy\"/></item></menu>";
+ 
+    xmenu = new dhtmlXMenuObject();
+    // xmenu.setIconsPath("{!URLFOR($Resource.DHTMLXgrid,'codebase/imgs/')}");
+    xmenu.renderAsContextMenu();
+    xmenu.attachEvent("onClick", onCodeClick);
+    xmenu.contextAutoHide = false;
+    //xmenu.loadXML("{!URLFOR($Resource.adjcodemenu,'adjcodemenu.xml')}");
+    xmenu.loadXMLString(xstr);
+
+    //xmenu.addNewSibling(null, "O", "Not in MR", false);
+    //xmenu.addNewSibling("O", "N", "No MD Order", false);
+    //xmenu.addNewSibling("N", "D", "Disputed", false); removed from xstr 1/7/12
+    //xmenu.addNewSibling("D", "C", "Contractually Disallowed", false);
+    //xmenu.addNewSibling("C", "A", "Appealed", false);
+    //xmenu.addNewSibling("A", "Z", "Other - NOTE REQUIRED", false);
+    //xmenu.addNewSibling("Z", "M", "Miscellaneous", false);
+    //alert('Siblings Created');
+    //xmenu.addNewChild("M", 0, "1", "Professional Fee(s)", false);
+    //xmenu.addNewChild("M", 1, "2", "Technical Component Fee(s)", false);
+    //xmenu.addNewChild("M", 2, "3", "Bundled/UnBundled", false);
+    //xmenu.addNewChild("M", 3, "4", "Client Directive/Specifications", false);
+    //xmenu.addNewChild("M", 4, "5", "CMS Guidelines", false);
+    //xmenu.addNewChild("M", 5, "6", "Investigational/Focused", false);
+    //xmenu.addNewChild("M", 6, "7", "Split bill", false);
+    //xmenu.addNewChild("M", 7, "8", "Business Office Request", false);
+    //xmenu.addNewChild("M", 8, "9", "Gender Specific Charge", false);
+   
+    // 8/2012 - SBower Added 17th column for "txt" field for the Annotation data.  C_Annotation is the Column.
+    theBillGrid = new dhtmlXGridObject('BillGrid');
+    theBillGrid.setImagePath("{!URLFOR($Resource.DHTMLXgrid,'codebase/imgs/')}"); 
+    theBillGrid.enableAutoWidth(true);
+    theBillGrid.setHeader("Edit,Err,Date,Dept,Charge Code,Bill Description,Rev,$/Unit,Qty Bill,<span style=\"background-color:yellow;\">Qty MR</span>,<span style=\"background-color:yellow;\">Qty Rev</span>,<span style=\"background-color:yellow;\">Code</span>,$Billed,$Adjust,<span style=\"background-color:yellow;\">Qty Disp</span>,$Disputed,Annotation");
+    theBillGrid.attachHeader("&nbsp;,#select_filter,#select_filter,#select_filter,#text_filter,#text_filter,#text_filter,&nbsp;,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan");
+    theBillGrid.setInitWidthsP("4,4,7,5,8,*,4,7,6,6,6,4,7,7,5,7,5"); //set column width in %
+    theBillGrid.setColAlign("center,center,center,center,center,left,center,right,center,center,center,center,right,right,center,right,center");//set column values align
+    theBillGrid.setColTypes("ed,ro,ro,ro,link,ro,ro,ron,ro,ed,ed,ro,ron,ron,ed,ron,txt");//set column types
+    theBillGrid.setColSorting("str,str,date,str,str,str,str,int,int,int,int,str,int,int,int,int,na");//set sorting
+    theBillGrid.enableTooltips("false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false");
+    theBillGrid.setDateFormat("%a %b %e");
+    theBillGrid.setNumberFormat("$0,000.00",C_ucost,".",",");
+    theBillGrid.setNumberFormat("$0,000.00",C_abill,".",",");
+    theBillGrid.setNumberFormat("$0,000.00",C_aadj,".",",");
+    theBillGrid.setNumberFormat("$0,000.00",C_adis,".",",");
+    theBillGrid.enableEditEvents(true,false,true);
+    // theBillGrid.setTabOrder("9,10,14");    
+    theBillGrid.enableContextMenu(xmenu);
+    theBillGrid.attachEvent("onBeforeContextMenu", conMenuPop);
+    
+    // dhtmlxEvent(window, "resize", function () {
+        // alert('Resizing');
+        //theBillGrid.setSizes(); return true;
+    //});    
+    
+    theBillGrid.attachEvent("onEditCell", handleEdits);
+    
+    theBillGrid.attachEvent("onXLE", function(grid_obj,count){
+        // alert('Load complete - rows = ' + theBillGrid.getRowsNum());
+        if (theBillGrid.getRowsNum() > 0) { 
+            theBillGrid.selectRow(0);
+            theBillGrid.customGroupFormat=function(name, count) {
+                var b = theBillGrid.groupStat(name,C_abill,"stat_total");
+                var a = theBillGrid.groupStat(name,C_aadj,"stat_total");
+                var c = b+a;
+                var i = name.indexOf('^');
+                if (i<0)
+                    i = name.length;                    
+                return name.slice(0,i)+"  :: Record Count: "+count+"&nbsp;&nbsp;&nbsp;Qty Billed: "+theBillGrid.groupStat(name,C_qbill,"stat_total")+"&nbsp;&nbsp;&nbsp;Total Billed: "+formatDollars(b)+"&nbsp;&nbsp;&nbsp;Net Adj: "+formatDollars(a)+"&nbsp;&nbsp;&nbsp;Revised Amt: "+formatDollars(c);     
+            };
+        }     
+        gridload = true;                            
+    });
+    theBillGrid.attachEvent("onBeforeSelect", function(nrow, orow){     
+        if (orow != null && orow != nrow) {
+            return (testEdit(orow));    // don't go if edit in progress
+        }       
+        return true;    
+    });
+    
+    theBillGrid.attachEvent("onTab", function(dir){
+        var c = theBillGrid.getSelectedCellIndex();
+        var rid = theBillGrid.getSelectedRowId();
+        var ri = theBillGrid.getRowIndex(rid);                          
+        if (dir && c == C_qrev) {
+            theBillGrid.selectCell(ri, C_qdis, false, false, true, true);
+            return false;
+        }
+        else if (!dir && c == C_qdis) {
+            theBillGrid.selectCell(ri, C_qrev, false, false, true, true);
+            return false;
+        }
+        else 
+            return true;    
+    });
+    
+    theBillGrid.attachEvent("onEnter", function(row,col){
+        var uf = theBillGrid.getUserData(row,"UpFlag");
+        if (uf == 0 && doedit) {
+            forceEdit(row, C_qmr);
+            return false;
+        }
+        //if (uf == 1) {    // Do field tab
+        //  var ri = theBillGrid.getRowIndex(row);
+        //  var rc = theBillGrid.getRowsNum();
+                    
+            // alert ("CR rowid="+row+" col="+col + " rowindx="+ri+" rowsnum="+rc);
+        //  if (col == C_qmr)
+        //      col = C_qrev;
+        //  else if (col == C_qrev)
+        //      col = C_qdis;
+        //  else {
+        //      if (col == C_qdis)
+        //          col = C_desc;
+        //      if (ri < rc-1)
+        //          ri++;
+        //  }
+        //  if (col == C_qmr || col == C_qrev || col == C_qdis) {
+        //      theBillGrid.selectCell(ri, col, false, false, true, true);
+        //  }
+        //  else {
+        //      theBillGrid.selectRow(ri);          
+        //  }   
+        //  return false;                       
+        //}
+        return true;
+    });
+    
+    // theBillGrid.attachEvent("onRowDblClicked", handleDClick);    // 1/7/12
+    
+    theBillGrid.attachEvent("onAfterSorting", function(index,type,direction){       
+        theBillGrid.showRow(theBillGrid.getSelectedRowId());
+    });    
+    
+    theBillGrid.init();
+    // theBillGrid.enableSmartRendering(true);    
+    theBillGrid.setSkin("gray");//set default skin           
+    loadBillView();
+}
+ 
+    function CDMpop(CId) {
+        //alert ("Pop CId="+CId);
+        if (CId.length > 0) {
+            var url="{!URLFOR('apex/CDMpopup')}" + "?id="+CId;
+            CDMWin=window.open(url,'Popup','height=280,width=880,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=no,status=no');
+            if (window.focus) {
+                CDMWin.focus();
+            }
+            return false;
+        }
+    }
+    
+    function groupByDate() {
+        theBillGrid.groupBy(C_date);           
+    }
+    function groupByDept() {
+        theBillGrid.groupBy(C_dept);    
+    }
+    function groupByCharge() {
+        theBillGrid.groupBy(C_chg);    
+    }    
+    function groupByDesc() {
+        theBillGrid.groupBy(C_desc);    
+    }
+    function groupByRevcode() {
+        theBillGrid.groupBy(C_rc);    
+    }
+    function groupByAdjcode() {
+        theBillGrid.groupBy(C_code);    
+    }    
+    function groupReset() {
+        theBillGrid.unGroup();
+    }
+    function clearAllFilters() {
+        theBillGrid.getFilterElement(1).value="";
+        theBillGrid.getFilterElement(2).value="";
+        theBillGrid.getFilterElement(3).value="";
+        theBillGrid.getFilterElement(4).value="";
+        theBillGrid.getFilterElement(5).value="";
+        theBillGrid.getFilterElement(6).value="";
+        theBillGrid.filterByAll();
+    }
+    
+    function genReport() {
+        //var elist = theBillGrid.collectValues(C_edit);
+        //if (elist.length == 0) {
+        //  alert ("No edits have been done on this case - Audit Case Report cannot be run");
+        //  return false;  
+        //}
+        var url="{!URLFOR('apex/AuditCasePop')}" + "?id="+"{!Audit__c.Id}";         
+        RptWin=window.open(url,'_blank');
+            if (window.focus) {
+                RptWin.focus();
+            }
+            return false;
+    }
+    
+    
+    function setNoEdits() {
+        $j("#noEdits").attr("style", "display:inline; color:red");              
+        doedit = false;
+        if ("{!AuditCanExit}" == "true") {
+            $j("#billDone").html("Exit Completed");         
+        }
+        else {
+            $j("#billDone").attr("style", "display:none");          
+        }
+    }
+       
+    function billDone () {
+        if($j("#billDone").html().indexOf("Analysis") != -1){
+        
+            if (confirm("Bill analysis completed."+"\n\n"+"By clicking 'OK' you are confirming that you have:"+"\n\n" +
+                "  1. Thoroughly reviewed and compared the medical record and the physician's orders"+"\n\n"+
+                "  2. Matched these records to the corresponding items on the bill")) {                 
+                if (confirm("Click 'OK' to update the audit status and disable further editing on this bill")) {
+                    setNoEdits();           
+                    AuditDetailGridExt.updateBillFlags("{!Audit__c.Id}", "true", "false", function(result, event) {
+                        if(event.type == 'exception') {
+                            alert (event.message);
+                        }
+                    });                         
+                }
+            }
+        }
+        else {
+            if (confirm("Exit process completed."+"\n\n"+"By clicking 'OK' you are confirming the following to be true and correct:"+"\n\n"+
+                "  1. My bill amount is exactly the same as the amount stated by the opposing audit firm"+"\n\n"+
+                "  2. My charges and adjustments (which may be categorized differently from the opposing audit firm)"+
+                " are an exact match at the net adjustment level and indicate an agreement between myself and the opposing auditor")) {
+                if (confirm("Click 'OK' to complete the exit and activate the post-exit workflow")) {
+                    document.getElementById("billDone").disabled = true;        
+                    // $j("#billDone").attr("style", "color:LightGray;");
+                    AuditDetailGridExt.updateBillFlags("{!Audit__c.Id}", "false", "true", function(result, event) {
+                        if(event.type == 'exception') {
+                            alert (event.message);
+                        }
+                        window.setTimeout(function(){
+                            location.reload(true);          
+                        },100);                 
+                    });
+                }                           
+            }       
+        }
+    }
+        
+    function loadBillView() {        
+        AuditDetailGridExt.fetchBill("{!Audit__c.Id}", "all", handleBillView);
+    }
+        
+    function handleBillView(result, event) {
+        if(event.type == 'exception') {
+            alert (event.message);
+        }
+        else {
+            // New JSON version
+            var jsonObj = new Object();
+            jsonObj.total_count = result.length;
+            jsonObj.pos = 0;
+            jsonObj.rows = [];
+            for (var i = 0; i < result.length; i++) {
+                var r = new Object();               
+                r.id = i+1; //Row id starts with 1
+                r.userdata = jud(result[i]);
+                r.data = jda(result[i]);                
+                jsonObj.rows.push(r);   // add row
+            }
+            nextRowID=result.length+1;
+            theBillGrid.parse(jsonObj,"json"); // Fill grid
+        }
+    }
+    
+    function jda(result) {
+        var da = new Array();
+        var e = false;        
+        // Load data for the row
+        if (result.MRFlag || result.AdjCode != "" || result.QtyDis != 0) {      // EDIT flag (1/5/12 for qty disp)
+            e = true;
+            var ed = new Object();
+            ed.value = "X";
+            ed.style = "background-color: #FFFF99;";
+            da[C_edit] = ed;                    
+        }
+        else {
+            da[C_edit] = "";
+        }
+        if (result.ErrCode == 0) {
+            da[C_err] = "";
+        }
+        else {              
+            da[C_err] = result.ErrCode;
+        }
+        da[C_date] = result.DOS;  // yyyy-mm-dd
+        da[C_dept] = result.Dept;
+        
+        da[C_chg] = result.ChgCode + '^javascript:CDMpop("' + result.CDMid + '")^_blank';
+        da[C_desc] = result.BillDesc;
+        da[C_rc] = result.RevCode;
+        da[C_ucost] = result.UCost;
+        if (result.QtyBill < 0) {
+            var ed = new Object();
+            ed.value = result.QtyBill;
+            ed.style = "background-color: #FFFF99;";
+            da[C_qbill] = ed;
+        }
+        else {
+            da[C_qbill] = result.QtyBill;
+        }
+        if (result.AdjCode == "D" || result.AdjCode == "") { // 1/7/12 - disputed only
+            da[C_qmr] = ""; 
+            da[C_qrev] = "";
+            da[C_code] = "";
+        }
+        else if (e) {
+            // CHANGED 07-29: always load mr qty            
+            if (result.AdjCode.charAt(0) == "X") {
+                da[C_qmr] = ""; 
+                da[C_qrev] = result.QtyRev;                
+            }
+            else {
+                da[C_qmr] = result.QtyMR;                    
+                da[C_qrev] = result.QtyRev;
+            }
+            var ed = new Object();
+            ed.value = result.AdjCode;
+            ed.style = "font-weight:bold;";
+            da[C_code] = ed;    
+        }
+        else {
+            da[C_qmr] = ""; 
+            da[C_qrev] = "";
+            da[C_code] = "";                    
+        }                   
+        if (result.AmtBill < 0) {
+            var ed = new Object();
+            ed.value = result.AmtBill;
+            ed.style = "color: red;";
+            da[C_abill] = ed;               
+        }
+        else {
+            da[C_abill] = result.AmtBill;
+        }
+        if (result.AmtAdj == 0) {
+            da[C_aadj] = "";
+        }
+        else {
+            if (result.AmtAdj < 0) {
+                var ed = new Object();
+                ed.value = result.AmtAdj;
+                ed.style = "color: red;";
+                da[C_aadj] = ed;                                
+            }
+            else {                          
+                da[C_aadj] = result.AmtAdj;
+            }
+        }
+        da[C_qdis] = (result.QtyDis == 0 ? "": result.QtyDis);  // 1/5/12
+        da[C_adis] = (result.AmtDis == 0 ? "": result.AmtDis);
+        da[C_Annotation] = result.Annotation;
+        return da;
+    }
+
+
+    function jud(result) {
+        // Userdata
+        var ud = new Object();                
+        ud.AId = result.AId;     // Item ID
+        ud.MRFlag = result.MRFlag;   // NOT NEEDED
+        ud.QtyMD = result.QtyMD; // NOT NEEDED
+        ud.UpFlag = 0;  // Update flags and saves
+        ud.Change = 0;
+        ud.Scode = "";
+        ud.Smr = "";
+        ud.Srev = "";
+        ud.Sadj = "";
+        ud.Sqd = "";    // 1/7/12       
+        ud.Sad = "";        
+        return ud;
+    }                  
+    
+    function handleDClick(rowId, celInd) {
+        if (testClicks(rowId, celInd)) {
+            var pos = theBillGrid.getPosition(theBillGrid.cell); // selected cell
+            // alert( "X=" + pos[0] + " Y=" + pos[1]);
+            window.setTimeout(function(){
+                xmenu.showContextMenu(pos[0], pos[1]);          
+            },1);
+            return true;
+        }
+        return false;
+    }
+    
+    function conMenuPop(rowId, celInd, grid) {
+        return testClicks(rowId, celInd);
+    }
+    function testClicks(rowId, celInd) {
+        // alert ("testClicks row="+rowId+ " cell="+celInd);
+        if (theBillGrid.getSelectedRowId() != rowId) {
+            theBillGrid.selectCell(theBillGrid.getRowIndex(rowId), celInd);         
+        }
+        else if (theBillGrid.getSelectedCellIndex() != celInd) {
+            theBillGrid.selectCell(theBillGrid.getRowIndex(rowId), celInd);
+        }           
+        var qval = parseInt(theBillGrid.cellById(rowId, C_qbill).getValue());   // qty must be +
+        var curc = theBillGrid.cellById(rowId, C_code).getValue();  // And code can't be U
+        
+        if (celInd == C_code && qval > 0 && curc != "U" && doedit)            
+            return true;        
+        return false;
+    }
+    
+    function onCodeClick(menuitemId, zone, cas) {       
+        var data = theBillGrid.contextID.split("_");
+        // alert("Id=" + menuitemId + " Row="+data[0] + " Col="+data[1]);
+        var row = data[0];
+        var acode = (menuitemId >="1" && menuitemId <="9")? "M"+menuitemId: menuitemId;
+        var ocode = theBillGrid.cellById(row, C_code).getValue();
+        if (ocode == acode)
+            return false;   // Not changed?
+        if (!startEdit(row, ocode))
+            return false;   // Can't process now?
+        setCode(row, acode);
+        theBillGrid.setUserData(row,"Change",1);    // Row changed                  
+        //var mrflag = theBillGrid.getUserData(row,"MRFlag");
+        var mrflag = false;
+        var qbill = parseInt(theBillGrid.cellById(row, C_qbill).getValue());
+        var ucost = Math.round(theBillGrid.cellById(row, C_ucost).getValue()*100);  // Ghosts of Micos
+        var abill = Math.round(theBillGrid.cellById(row, C_abill).getValue()*100);
+        var aadj = 0;
+        var adis = theBillGrid.cellById(row, C_adis).getValue();
+        if (adis != "")
+            adis = Math.round(adis*100);
+        var qdis = theBillGrid.cellById(row, C_qdis).getValue();        
+        var qrev, qmr;
+                        
+        //if (acode == "D") { removed 1/7/12
+        //    theBillGrid.cellById(row, C_adis).setValue(abill/100);
+        //    theBillGrid.cellById(row, C_qmr).setValue("");
+        //    theBillGrid.cellById(row, C_qrev).setValue("");
+        //    theBillGrid.cellById(row, C_aadj).setValue("");          
+        //    theBillGrid.setUserData(row,"MRFlag",mrflag);
+        //    endEdit(row,acode,"","","",abill);
+        //}
+        // else {
+            if (qbill == 1) {   // Trivial case
+                qrev = 0;
+                aadj = -ucost;
+                theBillGrid.cellById(row, C_qrev).setValue(qrev);
+                theBillGrid.cellById(row, C_aadj).setValue(aadj/100);
+                theBillGrid.setCellTextStyle(row, C_aadj, "color:red;");
+                if (acode == "N") {
+                    mrflag = true;
+                    qmr = 1;                    
+                }
+                else {
+                    if (acode == "O")
+                        mrflag = true;
+                    qmr = 0;
+                }               
+                theBillGrid.cellById(row, C_qmr).setValue(qmr);             
+                theBillGrid.setUserData(row,"MRFlag",mrflag);
+                //  theBillGrid.setUserData(row,"QtyMD",qtymd);
+                endEdit(row, acode, qbill, qmr, qrev, aadj, qdis, adis);               
+            }
+            else {
+                // Qty>1 requires auditor to enter amounts (if not already entered)
+                var mr = theBillGrid.cellById(row, C_qmr).getValue();
+                if (mr != "")
+                    qmr = parseInt(mr);
+                var rev = theBillGrid.cellById(row, C_qrev).getValue();
+                if (rev != "")
+                    qrev = parseInt(rev);   
+                if (mr != "" || rev != "") {
+                    if (acode == "O" || acode == "N") {
+                        mrflag = true;
+                        if (acode == "N" && mr == "") { // Must have MR - force edit
+                            // theBillGrid.cellById(row, C_qmr).setValue(qrev);
+                            theBillGrid.setUserData(row,"MRFlag",mrflag);                                       
+                            forceEdit(row, C_qmr);                          
+                            return true;                            
+                        }
+                        if (acode == "O") { // one is all we need
+                            if (rev != "" && mr != "") {                                
+                                if (qrev != qmr) {
+                                    if (confirm("Code \"O\" requires that revised quantity equals quantity in MR. Reset quantity?")) {
+                                        qrev = qmr;
+                                        theBillGrid.cellById(row, C_qrev).setValue(qrev);
+                                    }
+                                    else {
+                                        theBillGrid.cellById(row, C_code).setValue(""); // Clear code
+                                        return true; // bail now?
+                                    }
+                                }                                   
+                            }
+                            else {
+                                if (rev == "") {
+                                    qrev = qmr;
+                                    theBillGrid.cellById(row, C_qrev).setValue(qrev);   
+                                }
+                                else if (mr == "") {
+                                    qmr = qrev;
+                                    theBillGrid.cellById(row, C_qmr).setValue(qmr);
+                                }                               
+                            }                 
+                        }
+                        else {  // N
+                            if (qmr == 1 && rev == "") {    // trivial case 
+                                rev = "0";
+                                qrev = 0;
+                                theBillGrid.cellById(row, C_qrev).setValue(qrev);
+                            }
+                            if (rev == "" || (rev != "" && qrev == qmr)) { // "N" must have both                                    
+                                alert("Code \"N\" requires that revised quantity is less than quantity in MR");
+                                forceEdit(row, C_qrev);
+                                return true;                                                                                                                                        
+                            }
+                        }                               
+                    }
+                    else {
+                        // Non-MR adj - either qty ok
+                        mrflag = false;
+                        //theBillGrid.setUserData(row,"MRFlag",mrflag);
+                        if (mr == "") {
+                            qmr = qrev;
+                            theBillGrid.cellById(row, C_qmr).setValue(qmr);
+                        }                                                               
+                        else if (rev == "") {
+                            qrev = qmr;
+                            theBillGrid.cellById(row, C_qrev).setValue(qrev);
+                        }                                                                               
+                    }
+                    // Update Amts
+                    theBillGrid.setUserData(row,"MRFlag",mrflag);
+                    // Round?
+                    aadj = (qrev - qbill) * ucost;
+                    theBillGrid.cellById(row, C_aadj).setValue(aadj/100);
+                    var st = "";
+                    if (aadj < 0) {
+                        st = "color:red;";
+                    }
+                    theBillGrid.setCellTextStyle(row, C_aadj, st);
+                    endEdit(row, acode, qbill, qmr, qrev, aadj, qdis, adis);
+                }
+                else {
+                    // Neither qty entered - force edit
+                    if (acode == "O" || acode == "N") {
+                        mrflag = true;
+                        theBillGrid.setUserData(row,"MRFlag",mrflag);
+                        //theBillGrid.cellById(row, C_qrev).setValue(0);
+                        //theBillGrid.cellById(row, C_qmr).setValue(0);
+                        forceEdit(row, C_qmr);
+                        return true;
+                    }
+                    else {
+                        mrflag = false;
+                        theBillGrid.setUserData(row,"MRFlag",mrflag);
+                        //theBillGrid.cellById(row, C_qrev).setValue(0);
+                        //theBillGrid.cellById(row, C_qmr).setValue(0);
+                        forceEdit(row, C_qrev);
+                        return true;                                        
+                    }                                   
+                }                           
+            }
+        //}       
+        return true;
+    }
+    
+    function startEdit(row, ocode) {    // Init edit cycle
+        var uf = theBillGrid.getUserData(row,"UpFlag");
+        // alert ("Start edit row=" + row + " col="+theBillGrid.getSelectedCellIndex()+ " UF=" + uf + " Code=" + ocode );        
+        
+        if (uf == 2)
+            return false; // server update in progress
+        if (uf == 0) {  // new edit - save prior vals
+            var m = theBillGrid.cellById(row, C_qmr).getValue();
+            var r = theBillGrid.cellById(row, C_qrev).getValue();
+            var a = theBillGrid.cellById(row, C_aadj).getValue();
+            if (a != "")
+                a = Math.round(a*100);
+            var qd = theBillGrid.cellById(row, C_qdis).getValue();
+            if (qd === "")
+                qd = "0";   // set blank to zip            
+            var ad = theBillGrid.cellById(row, C_adis).getValue();
+            if (ad != "")
+                ad = Math.round(ad*100);
+            theBillGrid.setUserData(row,"UpFlag",1);    // Edit in progress
+            theBillGrid.setUserData(row,"Change",0);    // Something changed flag
+            theBillGrid.setUserData(row,"Scode", ocode);
+            theBillGrid.setUserData(row,"Smr",m);
+            theBillGrid.setUserData(row,"Srev",r);
+            theBillGrid.setUserData(row,"Sadj",a);
+            theBillGrid.setUserData(row,"Sqd",qd);
+            theBillGrid.setUserData(row,"Sad",ad);
+            theBillGrid.cellById(row, C_edit).setValue("");
+            theBillGrid.setCellTextStyle(row, C_edit, "background-color: #FFFF99");         
+        }
+        return true;
+    }
+    
+    function endEdit(row, acode, qbill, qmr, qrev, aadj, qdis, adis) {
+        // alert ("End edit row=" + row + " acode="+acode+" qmr="+qmr+" qrev="+qrev+" aadj="+aadj+" qdis="+qdis+" adis="+adis);
+        var uf = theBillGrid.getUserData(row,"UpFlag");
+        if (uf != 1) {
+            alert("endEdit called with UpFlag = " + uf);
+            return false;
+        }
+        // Check here for qdis/adis valid 1/7/12
+        if (qdis != "") {
+            var qdi = parseInt(qdis);
+            // alert ("qdi="+qdi+ " qrev len="+qrev.length+ " qrev blank="+(qrev === "")+" qrev="+parseInt(qrev)+" qbill="+parseInt(qbill));
+            if (qdi < 0) {
+                alert("Error: Quantity disputed cannot be negative");
+                theBillGrid.cellById(row, C_adis).setValue("");
+                forceEdit(row, C_qdis);
+                return false;            
+            }
+            if (qrev === "") {
+                if (qdi > parseInt(qbill)) {
+                    alert("Error: Quantity disputed cannot be greater than quantity billed");
+                    theBillGrid.cellById(row, C_adis).setValue("");             
+                    forceEdit(row, C_qdis);
+                    return false;
+                }
+            }
+            else if (qdi > parseInt(qrev)) {              
+                alert("Error: Quantity disputed cannot be greater than revised quantity");
+                theBillGrid.cellById(row, C_adis).setValue("");             
+                forceEdit(row, C_qdis);
+                return false;
+            }
+            
+        }
+        else 
+            qdis = "0"; // blank disputed = 0
+        
+        // TODO: Check for amount disputed <= total billed
+         
+        var c = theBillGrid.getUserData(row,"Scode");
+        var m = theBillGrid.getUserData(row,"Smr");
+        var r = theBillGrid.getUserData(row,"Srev");
+        var a = theBillGrid.getUserData(row,"Sadj");    // Cents
+        var qd = theBillGrid.getUserData(row,"Sqd");    // 1/7/12               
+        var ad = theBillGrid.getUserData(row,"Sad");    // Cents
+        if (c != acode || m != qmr || r != qrev || a != aadj || qd != qdis || ad != adis) {        
+            // Server update required
+            var mrf = theBillGrid.getUserData(row,"MRFlag");
+            serverEdit(row, acode, qmr, qrev, aadj, qdis, adis, mrf);
+        }
+        else {
+            resetEdit(row, acode, adis);  // No changes? - just reset                                             
+        }
+        return true;
+    }
+    function serverEdit(row, acode, qmr, qrev, aadj, qdis, adis, mrf) {
+        var id = theBillGrid.getUserData(row,"AId");
+        theBillGrid.setUserData(row,"UpFlag",2);    // AJAX IN PROGRESS
+        theBillGrid.setCellTextStyle(row, C_edit, "background-color: #FF6600");
+        // alert ("Update:" + row + " Id:"+id+" Code:"+acode+" qmr:"+qmr+" qrev:"+qrev+" aadj:"+aadj+" qdis:"+qdis+" adis:"+adis+" mrf:"+mrf);
+        AuditDetailGridExt.updateItem(row+"",id+"",acode+"",qmr+"",qrev+"",aadj+"",qdis+"",adis+"",mrf+"", handleUpdateComplete);       
+    }
+    
+    function testEdit(row) {    // Test if we can deselect row
+        var uf = theBillGrid.getUserData(row,"UpFlag");
+        if (uf != 1) {            
+            return true;    // Ok to go
+        }
+        var ch = theBillGrid.getUserData(row,"Change"); // Edit in progress - anything changed?
+        if (ch == 0) {  
+            var acode = theBillGrid.cellById(row, C_code).getValue();
+            var adis = theBillGrid.cellById(row, C_adis).getValue();    // 1/7/12
+            resetEdit(row, acode, adis);  // Nope - kill the edit            
+            return true;
+        }
+        else
+            return false;   // Can't go     
+    }
+            
+    function resetEdit (row, acode, adis) {
+        // alert ("Reset row=" + row + "  Code=" + acode);
+        if (acode == "" && adis == "") {
+            theBillGrid.cellById(row, C_edit).setValue("");
+            theBillGrid.setCellTextStyle(row, C_edit, "");
+            theBillGrid.cellById(row, C_qmr).setValue("");
+            theBillGrid.cellById(row, C_qrev).setValue("");
+            theBillGrid.cellById(row, C_code).setValue("");            
+            theBillGrid.cellById(row, C_aadj).setValue("");
+            theBillGrid.cellById(row, C_qdis).setValue("");          
+            theBillGrid.cellById(row, C_adis).setValue("");            
+        }
+        else {
+            theBillGrid.cellById(row, C_edit).setValue("X");
+            theBillGrid.setCellTextStyle(row, C_edit, "background-color: #FFFF99");
+        }
+        theBillGrid.setUserData(row,"UpFlag",0);
+        theBillGrid.setUserData(row,"Change",0);        
+    }
+    function undoEdit(row, acode) {
+        if (acode.charAt(0) == "X") {
+            if (confirm("Delete this added item?")) {
+                serverEdit(row, acode, "", "", "", "", "", false);  // Go clean it                                              
+            }
+        }
+        else if (confirm("Undo the edit on this item?")) {
+            serverEdit(row, "", "", "", "", "", "", false); // Go clean it      
+        }    
+    }
+    
+    function handleUpdateComplete (result, event) { // Ajax update complete
+        if(event.type == 'exception') {
+            alert (event.message);
+        }
+        else {
+            if (result.Code.charAt(0) == "X") {
+                selidx = theBillGrid.getRowIndex(result.Row);   // Save index
+                // alert("Deleted Id=" + result.Row + "  Index="+ selidx);              
+                theBillGrid.deleteRow(result.Row);  // Delete a previously added item
+                window.setTimeout(function(){
+                    theBillGrid.selectRow(selidx);  // Ensure we have a selected row            
+                },40);
+            }
+            else {
+                resetEdit (result.Row, result.Code, result.Adis); // Clear a prior edit
+            }
+            theBillGrid.refreshFilters();   // ?                
+            updateAuditTotals(result);            
+        }   
+    }
+
+    function updateAuditTotals(result) {
+        document.getElementById("gpage:topblock:titems").innerHTML = (firstitem? 1: theBillGrid.getRowsNum());
+        document.getElementById("gpage:topblock:tflags").innerHTML = result.Tflags;
+        document.getElementById("gpage:tbill").innerHTML = formatDollars(result.Tbill);
+        TotalBilled = result.Tbill;                            
+        document.getElementById("gpage:tund").innerHTML = formatDollars(result.Tund);
+        document.getElementById("gpage:tunb").innerHTML = formatDollars(result.Tunb);
+        document.getElementById("gpage:tsumu").innerHTML = formatDollars(result.Tsumu);
+        document.getElementById("gpage:tsumo").innerHTML = formatDollars(result.Tsumo);
+        document.getElementById("gpage:tadj").innerHTML = formatDollars(result.Tadj);
+        document.getElementById("gpage:tdisa").innerHTML = formatDollars(result.Tdisa);
+        document.getElementById("gpage:trev").innerHTML = formatDollars(result.Trev);
+        document.getElementById("gpage:tdisp").innerHTML = formatDollars(result.Tdisp);
+    }
+    
+    function setCode(row, acode) {
+        theBillGrid.cellById(row, C_code).setValue(acode);
+        theBillGrid.setCellTextStyle(row, C_code, "font-weight:bold;");     
+    }
+    function handleAnnotationEdits(stage,rId,cInd,nValue,oValue) {
+        // alert("Annotation Cell edit stage="+stage+" rId="+rId+" cInd=" + cInd + " old=" + oValue + "  new=" + nValue);
+        
+        if (stage == 0) {  // Cell Editing initiated
+            if (!doedit) 
+                return false;       // Bill is locked
+        }
+        if (stage == 1) { // Cell Editor activated and ready for input
+        }
+        if (stage == 2) { // Editing complete.
+            // Do the update
+            if (nValue != oValue) { // Don't bother if nothing has changed.
+                var id = theBillGrid.getUserData(rId,"AId");
+                AuditDetailGridExt.updateItemAnnotation(id+"", nValue+"", 
+                    function handleUpdateAnnotationComplete (result, event) {});    
+            }
+            return true;
+        }
+    }
+    function handleEdits(stage,rId,cInd,nValue,oValue) {
+        // Special case for the edits to Annotations
+        if (cInd == C_Annotation) return handleAnnotationEdits(stage, rId, cInd, nValue, oValue);
+        
+        var qbill = parseInt(theBillGrid.cellById(rId, C_qbill).getValue());
+        var acode = theBillGrid.cellById(rId, C_code).getValue();           
+         // alert("Cell edit stage="+stage+" rId="+rId+" cInd=" + cInd + " old=" + oValue + "  new=" + nValue);
+            
+        if (stage == 0) {
+            if (!doedit) 
+                return false;       // Bill is locked
+            if (cInd == C_edit) {   // Undo?
+                if(theBillGrid.cellById(rId, C_edit).getValue() == "X" && theBillGrid.getUserData(rId,"UpFlag") == 0) {
+                    undoEdit(rId, acode);
+                }
+                return false;   // Suppress edit
+            }
+            if (qbill < 0 || acode.charAt(0) == "X")    // Can't be billed adjustment or added item
+                return false;   // non-editable
+            if (startEdit(rId, acode))  // editable - init the update
+                return true;
+            else
+                return false;   // can't?
+        }
+        if (theBillGrid.getUserData(rId,"UpFlag") != 1) {
+            return false;   // Edit has been cancelled for this row (NEVER HAPPENS)
+        }
+        if (stage == 2) {
+            var rev;
+            var mr;
+            var ch = theBillGrid.getUserData(rId,"Change");
+            // alert("stage="+stage+ " Change="+ch+" cInd=" + cInd + " old=" + oValue + "  new=" + nValue);
+            
+            if (nValue == "") { // Null entry?              
+                if (cInd == C_qdis) {
+                    nValue = "0";       // If disputed, set blank = "0" to clear
+                }
+                else if (ch != 0 || isNaN(oValue)) { // Not disp: row changed, or prior val is bad?
+                    alert ("Error: Field cannot be blank");                    
+                    forceEdit(rId, cInd);
+                    return false;
+                }
+                if (ch == 0) {
+                    return false; // No change to row - exit the edit
+                }                 
+            }
+            else {  // Non-null entry
+                var val = parseInt(nValue);
+                if (isNaN(val) || val < 0 ) {
+                    alert ("Error: Invalid numeric entry");                    
+                    forceEdit(rId, cInd);
+                    return false;
+                }
+            }
+            
+            if (oValue == nValue && ch == 0) {
+                return false;        // No change to field OR row - exit
+            }
+            theBillGrid.setUserData(rId,"Change",1);    // Row changed - prevent row deselect
+            
+            if (cInd == C_qdis) {   // Qty disputed 1/7/12
+                // alert ("qdis nvalue="+nValue);
+                
+                var ad = 0;
+                var m = theBillGrid.cellById(rId, C_qmr).getValue();
+                var r = theBillGrid.cellById(rId, C_qrev).getValue();
+                var a = theBillGrid.cellById(rId, C_aadj).getValue();               
+                if (a != "")
+                    a = Math.round(a*100);
+                if (nValue == 0) {
+                    theBillGrid.cellById(rId, C_qdis).setValue(""); // Clear it
+                    theBillGrid.cellById(rId, C_adis).setValue("");
+                }
+                else {
+                    var ucost = Math.round(theBillGrid.cellById(rId, C_ucost).getValue()*100);                
+                    ad = nValue * ucost;    // Amount disputed
+                    theBillGrid.cellById(rId, C_adis).setValue(ad/100);
+                }               
+                return (endEdit(rId, acode, qbill, m, r, a, nValue, ad));            
+            }
+                                     
+            if (acode == "U") { // Clear underbilled
+                acode = "";
+                theBillGrid.cellById(rId, C_code).setValue(acode);
+            }
+            
+            if (cInd == C_qmr) {    // MR entry - get rev               
+                rev = theBillGrid.cellById(rId, C_qrev).getValue();                
+                mr = nValue;
+            }
+            else {
+                rev = nValue;   // Rev entry - get MR
+                mr = theBillGrid.cellById(rId, C_qmr).getValue(); 
+            }
+            var qmr;
+            var qrev;               
+            var upvals = false;
+            var goed = 0;
+            var mrflag = false;
+            if (mr != "" && rev == "") {  // MR only
+                qmr = parseInt(mr);
+                if (acode == "N") {
+                    if (qmr == 0) {
+                        if (!confirm("MR quantity of zero not valid with code \"N\". Change code to \"O\"?")) {
+                            forceEdit(rId, C_qmr);
+                            return false;
+                        }
+                        acode = "O";
+                        rev = mr;
+                        qrev = 0;   
+                        setCode(rId, acode);
+                        theBillGrid.cellById(rId, C_qrev).setValue(qrev);
+                        upvals=true;
+                    }
+                    else if (qmr == 1) {
+                        rev = mr;
+                        qrev = 0;   // trivial case 
+                        theBillGrid.cellById(rId, C_qrev).setValue(qrev);
+                        upvals=true;                    
+                    }                                   
+                }
+                else {
+                    if (qmr != qbill) { // Other code, or no code
+                        rev = mr;
+                        qrev = qmr;
+                        theBillGrid.cellById(rId, C_qrev).setValue(qrev);   // Default Rev = MR
+                        if (acode == "" && qrev == 0) { 
+                            acode = "O";
+                            setCode(rId, acode);                        
+                        }                 
+                        if (acode != "")
+                            upvals=true;
+                    }
+                }
+                goed = C_qrev;  // cell to edit if !upvals           
+            }            
+            if (rev != "" && mr == "") {    // Only rev?             
+                qrev = parseInt(rev);               
+                if (qrev == qbill) {
+                    alert("Error: The revised quantity is equal to the original billed quantity");
+                    upvals = false;
+                    goed = C_qrev;                                        
+                }                                                               
+                else if (qrev > qbill) { // Underbilled
+                    if (!confirm("Confirm that underbilled quantity is documented in MR")) {        
+                        forceEdit(rId, C_qrev);             
+                        return false;
+                    }
+                    qmr = qrev;
+                    mr = rev;
+                    theBillGrid.cellById(rId, C_qmr).setValue(qmr); // Force MR                 
+                    acode = "U";    
+                    setCode(rId, acode);                                
+                    upvals = true;                      
+                }               
+                else if (qrev < qbill) { // Only rev?                   
+                    if (acode == "") {
+                        acode = "O";    // default is "O"
+                        setCode(rId, acode);
+                    }
+                    qmr = qrev;
+                    mr = rev;
+                    theBillGrid.cellById(rId, C_qmr).setValue(qmr); // Force MR 
+                    if (acode != "")
+                        upvals = true;  // Overbilled (or other Adj)
+                    else 
+                        goed = C_qmr;   // cell to edit if !upvals
+                }
+            }                        
+            if (mr != "" && rev != "") {    // Got both values    
+                qmr = parseInt(mr);
+                qrev = parseInt(rev);
+                // alert ("mr="+mr+" qmr="+qmr+" rev="+rev+" qrev="+qrev);
+                if (qrev > qmr) {
+                    alert("Error: The revised quantity cannot be greater than MR quantity");
+                    upvals = false;
+                    goed = C_qrev;                   
+                }
+                else if (qrev == qbill) {
+                    alert("Error: The revised quantity is equal to the original billed quantity");
+                    upvals = false;
+                    goed = C_qrev;                                    
+                }
+                else if (qrev < qbill) { // Overbill
+                    if (qrev < qmr) { // Implies no MD ord
+                        if (acode == "O") {
+                            if (confirm("An overcharge with revised quantity that is less than MR quantity requires code \"N\". Change code to \"N\"?")) {
+                                acode = "N";
+                                setCode(rId, acode);                                
+                            }
+                            else {
+                                forceEdit(rId, C_qrev);             
+                                return false;
+                            } 
+                        }
+                        else if (acode == "") {
+                            acode = "N";    // Default to "N"
+                            // mrflag=true;                                             
+                            setCode(rId, acode);
+                        }
+                        if (acode != "")
+                            upvals=true;                        
+                    }
+                    else {  // MR = Rev
+                        if (acode == "") {
+                            acode = "O";    // default is "O", validate below
+                            setCode(rId, acode);                                
+                        }
+                        else if (acode == "N") {
+                            if (!confirm("Code \"N\" not valid when revised quantity equals MR quantity. Change code to \"O\"?")) {
+                                acode = "";
+                                upvals = false;
+                            }
+                            else {
+                                acode = "O";
+                            }
+                            setCode(rId, acode);                                
+                        }
+                        if (acode != "") {
+                            upvals=true;
+                        } 
+                    }
+                }
+                else {  // Underbill
+                    acode = "U";    
+                    setCode(rId, acode);                                
+                    upvals = true;                
+                }
+            }
+                                                        
+            if (upvals) {   // re-calc and update
+                var ucost = Math.round(theBillGrid.cellById(rId, C_ucost).getValue()*100);
+                var aadj = (qrev - qbill) * ucost;
+                theBillGrid.cellById(rId, C_aadj).setValue(aadj/100);
+                var st = "";
+                if (aadj < 0) {
+                    st = "color:red;";
+                }
+                theBillGrid.setCellTextStyle(rId, C_aadj, st);
+                theBillGrid.setUserData(rId,"MRFlag",mrflag);
+                var adis = theBillGrid.cellById(rId, C_adis).getValue();
+                if (adis != "")
+                    adis = Math.round(adis*100);
+                var qdis = theBillGrid.cellById(rId, C_qdis).getValue();                                
+                if (!endEdit(rId, acode, qbill, qmr, qrev, aadj, qdis, adis))
+                    return true;    // err, but don't re-write field                                                   
+            }
+            else if (goed > 0) {
+                forceEdit(rId, goed);
+                return true;                          
+            }
+            return true; 
+        }          
+    }
+    function isNumber (o) {
+        return ! isNaN (o-0);
+    }
+    function forceEdit(rId, col) {        
+        var rowindex = theBillGrid.getRowIndex(rId);
+        window.setTimeout(function(){
+            theBillGrid.selectCell(rowindex, col, false, false, true, true);
+            //theBillGrid.editCell();
+        },20);              
+    }
+    
+    function formatDollars(num) {
+        var s1 = num <0? "(": "";
+        var s2 = num <0? ")": "";
+        var i = parseInt(num = Math.abs(num).toFixed(2)) + "";
+        var j = (j = i.length) > 3 ? j % 3 : 0;
+        return s1 + "$" + (j ? i.substr(0, j) + "," : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + ",") + "." + Math.abs(num - i).toFixed(2).slice(2) + s2;
+    }
+    
+    function showhidebody() {
+        var off = $j("#BillGrid").offset();
+        var G_con = 385; 
+        var dh = $j(document).height();
+        var wh = $j(window).height();   
+        // alert("Window="+wh+ " Document="+dh+" Grid Height="+$j("#BillGrid").height()+" Grid Left="+off.left+" Grid Top="+off.top);  
+        if (nobody) {
+            $j("#auditbody").attr("style", "display:block");
+            $j("#showhidebody").html("^");
+            nobody = false;
+        }
+        else {
+            $j("#auditbody").attr("style", "display:none");
+            $j("#showhidebody").html("v");
+            nobody = true;
+            off = $j("#BillGrid").offset();
+            if (wh >= dh && (off.top + G_con) < dh ) {
+                var grow = "+="+(dh-off.top-G_con);
+                //alert ("Grow="+grow);
+                $j("#BillGrid").css("height", grow);
+                theBillGrid.setSizes();
+            }       
+        }
+    }
+    
+    function Date_toYMD() {
+        var year, month, day;
+        year = String(this.getFullYear());
+        month = String(this.getMonth() + 1);
+        if (month.length == 1) {
+            month = "0" + month;
+        }
+        day = String(this.getDate());
+        if (day.length == 1) {
+            day = "0" + day;
+        }
+        return year + "-" + month + "-" + day;
+    }
+    
+    function addItemInit() {
+        if (!doedit) {
+            $j("#addlineloading").attr("style", "display:none");
+            $j("#addlinedisabled").attr("style", "display:inline; color:red");              
+            return;     
+        }
+        if (firstitem) {
+            // No bill uploaded - allow initial item add with grid init after
+            $j("#adduspan").attr("style", "visibility:hidden");
+            $j("#clonebut").attr("style", "visibility:hidden");
+            $j("#addreason").attr("style", "display:none");
+            $j("#addsummary").attr("style", "display:inline");                      
+            document.getElementById("addn").checked = true;         
+            addingUn = false;
+        }
+        if (!aiInit) {
+            Date.prototype.toYMD = Date_toYMD;
+            
+            var sd = document.getElementById("aidate");
+            var dts = new Date({!DOSsyear}, {!DOSsmonth}-1, {!DOSsday});
+            for (var i = 0; i < {!ServiceDays} ; i++) { // Gen all service dates! 1/7/12
+                sd.options[i] = new Option(dts.toYMD());
+                dts.setDate(dts.getDate()+1);
+            }                       
+            if (!firstitem) {
+                //var dlist = theBillGrid.collectValues(C_date);    // Get list of distinct dates from grid!
+                //var sd = document.getElementById("aidate");
+                //for (var i=0; i<dlist.length; i++) {
+                //  sd.options[i] = new Option(dlist[i]);           
+                //}
+                document.getElementById("addu").checked = true;
+                addingUn = true;            
+            }
+            AuditDetailGridExt.fetchDepts("true", function(result, event) {     // Get Audit Dept list
+                    if(event.type == 'exception') {
+                        alert (event.message);
+                    }
+                    else {
+                        sd = document.getElementById("aidept");
+                        for (var i=0; i<result.length; i++) {
+                            sd.options[i] = new Option(result[i].DCode + " - " + result[i].DDesc);
+                            sd.options[i].value = result[i].Id;
+                        }                       
+                    }
+            });             
+            aiUCost = 0;
+            aiBQty = 1;
+            aiBTot = 0;                 
+            $j("#addlineloading").attr("style", "display:none");
+            $j("#addline").attr("style", "visibility:visible");         
+            aiInit = true;
+            aiGoodRec = false;
+            aiGoodNums = false;
+            aiFields();
+        }
+        else {      // Clear the fields
+            resolveDept("");
+            $j("#aicdmcode").val("");
+            $j("#aicdmdesc").val("");
+            $j("#aiunit").val("");
+            aiBQty = 1;
+            $j("#aiqty").val(aiBQty);
+            $j("#aitot").val("");
+            aiGoodRec = false;
+            aiGoodNums = false;
+            aiNumError("aiqty", false);             
+        }
+        // document.getElementById("clonecheck").checked = false;
+            
+    }
+    function popCDMCodeSearch() {
+        popCDMSearch($j("#aicdmcode").val(), "");       
+    }
+    function popCDMDescSearch() {
+        popCDMSearch("", $j("#aicdmdesc").val());       
+    }
+    function popCDMSearch(code, desc) {
+        var url="{!URLFOR('apex/CDMsearch')}" + "?acct="+"{!AcctId}"+"&date="+$j("#aidate").val()+"&code="+code+"&desc="+desc;
+        // alert ("URL="+url);  
+            CDMsch=window.open(url,'CDM Search','height=540,width=760,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=no,status=no');
+            if (window.focus) {
+                CDMsch.focus();
+            }       
+    }
+    function postCDMSearch(code, desc, dept, unit) {
+        // alert("post code="+code+" desc="+desc+" dept="+dept+" unit="+unit);
+        resolveDept(dept);
+        $j("#aicdmcode").val(code);
+        $j("#aicdmdesc").val(desc);
+        $j("#aiunit").val(unit);
+        aiBQty = 1;
+        $j("#aiqty").val(aiBQty);
+        doItemCalc("aiunit");   
+        CDMsch.close();                 
+    }
+    
+    function resolveDept(d) {
+        if (d == null || d =="") {
+                d="NO";             // No Dept
+        }
+        var sd = document.getElementById("aidept");
+        for (var i=0; i<sd.options.length; i++) {
+            if (sd.options[i].text.indexOf(d) == 0) {
+                d = sd.options[i].text;
+                sd.selectedIndex = i;
+                break;
+            }
+        }
+        return d;       
+    }
+    
+    function radioClick(rid) {
+        if (rid == "addu") {
+            $j("#addsummary").attr("style", "display:none");
+            $j("#gensumbut").attr("style", "visibility:hidden");            
+            $j("#addreason").attr("style", "display:inline");
+            addingUn = true;
+        }
+        else {
+            $j("#addreason").attr("style", "display:none");
+            $j("#addsummary").attr("style", "display:inline");
+            $j("#gensumbut").attr("style", "visibility:visible");
+            addingUn = false;                       
+        }
+    }
+    
+    function cloneClick() {
+        var r = theBillGrid.getSelectedRowId();
+        if (r == null) {
+            alert("No row is currently selected");
+            // document.getElementById("clonecheck").checked = false;
+            return;
+        }
+        // Save prior contents?
+        
+        var d = resolveDept(theBillGrid.cellById(r,C_dept).getValue());             
+        var cc = theBillGrid.cellById(r,C_chg).getValue();
+        var j = cc.indexOf('^');
+        if (j<0)
+            j = cc.length;
+        var desc = html_entity_decode(theBillGrid.cellById(r,C_desc).getValue());
+        aiUCost = Math.round(theBillGrid.cellById(r,C_ucost).getValue()*100);
+        aiBQty = theBillGrid.cellById(r,C_qbill).getValue();
+        aiBTot = Math.round(theBillGrid.cellById(r,C_abill).getValue()*100);        
+        $j("#aidate").val(theBillGrid.cellById(r,C_date).getValue());
+        // $j("#aidept").val(d);
+        $j("#aicdmcode").val(cc.slice(0,j));
+        $j("#aicdmdesc").val(desc);
+        $j("#aiunit").val(formatDollars(aiUCost/100));
+        $j("#aiqty").val(aiBQty);
+        $j("#aitot").val(formatDollars(aiBTot/100));            
+        if (aiBQty > 0) {
+            aiGoodNums = true;
+        }
+        else {
+            aiGoodNums = false;
+            aiNumError("aiqty", true);
+            document.getElementById("aiqty").focus();
+        }
+        aiFields();                                                 
+    }
+
+    function html_entity_decode(str){       
+        document.getElementById("htmlconverter").innerHTML = '<textarea id="innerConverter">' + str + '</textarea>';
+        var content = document.getElementById("innerConverter").value;
+        document.getElementById("htmlconverter").innerHTML = "";
+        return content;
+    }
+    
+    function doItemCalc(x) {
+        var v = document.getElementById(x).value;
+        var amt = v.toString(); // Validate, convert qty/amt fields         
+        if (x != "aiqty") {
+            if (amt.indexOf("$") == 0)
+                amt = amt.slice(1);
+            var com = amt.indexOf(",");     
+            if ( com > 0)
+                amt = amt.substr(0,com) + amt.slice(com+1);
+            v = Number(amt);            
+        }
+        else {
+            v = parseInt(amt);
+        }       
+        if (isNaN(v) || v < 0 || (v == 0 && x == "aiqty")) {
+            aiGoodNums = false;
+            aiNumError(x, true);
+            document.getElementById(x).focus();
+        }
+        else {          
+            if (x == "aiqty") {
+                aiBQty = v;
+                aiBTot = aiUCost * aiBQty;
+            }
+            else if (x == "aiunit") {
+                aiUCost = Math.round(v*100);
+                aiBTot = aiUCost * aiBQty;
+            }
+            else {
+                aiBTot = Math.round(v*100);
+                aiUCost = aiBTot/aiBQty;    // Decimal places??                 
+            }
+            aiGoodNums = true;
+            aiNumError(x, false);               
+            $j("#aiunit").val(formatDollars(aiUCost/100));
+            $j("#aiqty").val(aiBQty);
+            $j("#aitot").val(formatDollars(aiBTot/100));                    
+        }
+        aiFields();                 
+    }
+    
+    function aiNumError(x, f) {
+        if (f) {
+            $j("#"+x).attr("style", "outline:red solid thin");
+        }
+        else {
+            $j("#"+x).attr("style", "outline:none");                    
+        }    
+    }
+    
+    function aiFields() {
+        // Test if all item fields entered and valid (assume date and dept are ok)
+        var c = $j("#aicdmcode").val();
+        var d = $j("#aicdmdesc").val();
+        // For now, allow blank codes
+        aiGoodRec = (d == null || d.length == 0)? false: true; 
+        if (aiGoodRec && aiGoodNums) {
+            document.getElementById("aibutton").disabled = false;
+            $j("#aibutton").attr("style", "color:black; font-size:120%");
+            document.getElementById("asbutton").disabled = false;
+            $j("#asbutton").attr("style", "color:black; font-size:120%");           
+        }
+        else {
+            killaibut();
+        }   
+    }
+    function killaibut() {
+        document.getElementById("aibutton").disabled = true;        
+        $j("#aibutton").attr("style", "color:LightGray; font-size:120%");
+        document.getElementById("asbutton").disabled = true;
+        $j("#asbutton").attr("style", "color:LightGray; font-size:120%");                                          
+    }
+    function genNonAdj() {
+        aiUCost = Math.round((TotalAuditAmt - TotalBilled)*100);
+        aiBQty = 1;
+        aiBTot = aiUCost;       
+        if (aiUCost == 0) {
+            alert("No adjustment necessary - the total billed amount is equal to the audit (LOI) amount");
+            return;
+        }
+        if (aiUCost < 0) {
+            alert("Can't create an adjustment entry when the total billed amount is greater than the audit (LOI) amount");
+            return;
+        }           
+        resolveDept("");
+        $j("#aicdmcode").val("");
+        $j("#aicdmdesc").val("Total non-adjusted items");
+        $j("#aiunit").val(formatDollars(aiUCost/100));
+        $j("#aiqty").val(aiBQty);
+        $j("#aitot").val(formatDollars(aiBTot/100));            
+        aiGoodNums = true;      
+        aiFields();
+    }
+    
+    function addItem() {
+        var ro;
+        killaibut();
+        var c = $j("#aicdmcode").val();
+        var d = $j("#aicdmdesc").val();
+        var da = $j("#aidate").val();
+        var sd = document.getElementById("aidept");
+        var so = sd.options[sd.selectedIndex].value;    //Dept rec ID
+        if (addingUn) {
+            var rd = document.getElementById("aireason");
+            ro = rd.options[rd.selectedIndex].value;    // Reason code "Xn"
+            document["waitspin1"].src = gfspin.src;     
+        }
+        else {
+            ro = "AA";  // Indicates we are adding new item, not unbilled
+            document["waitspin2"].src = gfspin.src;     
+        }
+        // alert ("Add="+"{!Audit__c.Id}"+":"+so+":"+ro+":"+d+":"+da+":"+aiBQty);       
+        
+        AuditDetailGridExt.addLineItem("{!Audit__c.Id}", c+"",d,da+"",so,ro,aiBQty+"",aiUCost+"",aiBTot+"", function(result, event) {
+            if(event.type == 'exception') {
+                alert (event.message);
+            }
+            else {
+                if (!firstitem) {
+                    var jsonObj = new Object();
+                    //jsonObj.total_count = 1;
+                    jsonObj.pos = theBillGrid.getRowsNum(); // Offset MUST be to end of row buffer
+                    jsonObj.rows = [];
+                    var r = new Object();               
+                    r.id = nextRowID; 
+                    r.userdata = jud(result);
+                    r.data = jda(result);                
+                    jsonObj.rows.push(r);   // add row
+                    theBillGrid.parse(jsonObj,"json"); // Add row
+                    nextRowID += 1;             
+                    updateAuditTotals(result);  // Update tots
+                    window.setTimeout(function(){
+                        theBillGrid.refreshFilters();            
+                    },20);                                              
+                }
+                else {
+                    updateAuditTotals(result);  // First item added to bill - update totals
+                    firstitem = false;  // Got first row                
+                    document.getElementById("BillGrid").innerHTML = "";
+                    $j("#gridtools").attr("style", "visibility:visible");
+                    InitGrids();    // Create the grid now!
+                    
+                    $j("#adduspan").attr("style", "visibility:visible");
+                    $j("#clonebut").attr("style", "visibility:visible");
+                    $j("#gensumbut").attr("style", "visibility:visible");           
+                }
+                
+            }
+            document["waitspin1"].src = gfpix.src;
+            document["waitspin2"].src = gfpix.src;      
+        });
+    }
+    function printGrid(){
+        theBillGrid.printView('<strong>Audit Case {!Audit__c.Name}: {!AcctName}</strong>');
+    } 
+           
+    </script>
+
+    
+    <apex:sectionHeader title="Audit Detail View" subtitle="placeholder"/>
+    <apex:outputText value="{!Audit__c.Opposing_Audit_Account__c} {!Audit__c.Opposing_Auditor__c} {!Audit__c.Opposing_Scheduler__c}"
+    rendered="false" />
+    <apex:outputText value="{!Audit__c.Account__c} {!Audit__c.Service_Start_Date__c} {!Audit__c.Service_End_Date__c} {!Audit__c.Assigned_Auditor__c}"
+    rendered="false" />
+    <apex:outputText value="{!Audit__c.Facility_MR_Contact__c} " 
+    rendered="false" />
+    <apex:outputText id="editdone" value="{!Audit__c.Bill_Analysis_Complete__c}" 
+    rendered="false" />
+    <apex:pageBlock id="topblock" >
+    <apex:outputPanel id="topline" layout="block">
+    <table width="100%">
+        <tr>
+            <td style="white-space:nowrap;" width="30%">
+            <apex:outputText style="text-align:left; font-size:150%" value="Audit Case {!Audit__c.Name} "></apex:outputText>          
+            <apex:outputLink value="{!AuditViewPageRef}" id="viewlink">[View]</apex:outputLink>&nbsp;&nbsp;
+            <apex:outputLink value="{!AuditEditPageRef}" id="editlink" rendered="{!NOT(IsLimited)}">[Edit]</apex:outputLink>
+            </td>
+            <td style="text-align:center; white-space:nowrap; font-size:150%" width="40%">
+                <apex:outputText value="Stage: {!Audit__c.Audit_Stage__c}"/>
+                 <font color="#F8F8F8">---</font>
+                <apex:outputText value="Role/Type: {!Audit__c.Audit_Role__c}/{!Audit__c.Audit_Type__c}"></apex:outputText>
+            </td>
+            <td width="30%" style="white-space:nowrap; text-align:left; padding-left:40px">
+                <apex:outputText value="Exit Date: {0,date,MM-dd-yyyy}" style="font-size:150%;">
+                <apex:param value="{!IF(OR(Audit__c.Audit_Stage__c = 'Pending', Audit__c.Audit_Stage__c = 'Scheduled'),DATEVALUE(Audit__c.Date_Proposed_Exit__c),DATEVALUE(Audit__c.Date_Actual_Exit__c))}"/>
+                </apex:outputText>
+                <apex:outputText value="{!IF(AND(OR(Audit__c.Audit_Stage__c = 'Pending', Audit__c.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(Audit__c.Date_Proposed_Exit__c))), '*', '')}"/>
+                        
+            </td>
+        </tr>
+        <tr>
+            <td style="white-space:nowrap; text-align:left;" width="30%">           
+            <b>Auditor:  </b>
+            <apex:outputLink value="{!AuditorPage}" rendered="{!IF(isAuditorPage, 'true', 'false')}">{!AuditorName}</apex:outputLink>
+            <apex:outputText value="{!AuditorName}" rendered="{!IF(isAuditorPage, 'false', 'true')}"/>              
+            </td>
+            <td style="text-align:center; white-space:normal;" width="40%">
+            <div><b>Next Scheduled Activity: </b>{!NextEvent}
+                <apex:outputLink value="{!EventPage}" id="evlink" rendered="{!IF(NextTime != '','true', 'false')}"><b> {!NextTime}</b></apex:outputLink></div>
+            </td>
+            <td width="30%" style="white-space:nowrap; text-align:left; padding-left:40px">
+            <b>Mode:  </b><apex:outputField value="{!Audit__c.Exit_Mode__c}"/>
+            <button id="showhidebody" type="button" onclick="showhidebody()" style="float:right;">^</button>
+                                          
+            </td>                       
+        </tr>
+        
+    </table>
+    <hr />
+    </apex:outputPanel>
+    
+    <div id="auditbody">
+    <table width="100%">
+        <tr>
+            <td style="text-align: right;" width="15%">
+                <b>Payer Type/Name</b>
+            </td>
+            <td style="text-align: left;" width="20%">
+                <apex:outputField value="{!Audit__c.Payer_Type__c}"/>/<apex:outputField value="{!Audit__c.Payer__c}"/> 
+            </td>           
+            <td style="text-align: right;" width="15%">
+                <b>Account Manager</b>
+            </td>
+            <td style="text-align: left;" width="20%">
+            <apex:outputLink value="{!AcctOwnerPage}">{!AcctOwnerName}</apex:outputLink>
+            </td>
+            <td style="text-align: right;" width="15%">
+                <b>LOI Date</b>
+            </td>
+            <td style="text-align: left; padding-right:20px" width="15%">
+                <apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Date_LOI__c}"/></apex:outputText>
+            </td>
+    
+        </tr>
+        <tr>
+            <td style="text-align: right;" >
+                <b>Patient Name</b>
+            </td>
+            <td style="text-align: left;" >
+                <apex:outputText value="{!Audit__c.Patient_Name__c}"/>                      
+            </td>           
+            <td style="text-align: right;">
+                <b>Medical Records Contact</b>
+            </td>
+            <td style="text-align: left;">
+            <apex:outputLink value="{!MRConPage}" rendered="{!IF(isMRConPage, 'true', 'false')}">{!MRContact}</apex:outputLink>
+            <apex:outputText value="{!MRContact}" rendered="{!IF(isMRConPage, 'false', 'true')}"/>              
+            </td>           
+            <td style="text-align: right;" >
+                <b>Chart Pull</b>
+            </td>
+            <td style="text-align: left; padding-right:20px" >
+                <apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Date_Chart_Pull_Requested__c}"/></apex:outputText>
+            </td>
+    
+        </tr>
+        <tr>
+            <td style="text-align: right;">
+                <b>Account Number</b>
+            </td>
+            <td style="text-align: left;">
+                <apex:outputText value="{!Audit__c.Patient_Account__c}"/>                   
+            </td>               
+            <td style="text-align: right;" >
+                <b>Opposing Audit Firm</b>
+            </td>
+            <td style="text-align: left;" >
+            <apex:outputLink value="{!OppFirmPage}" rendered="{!IF(isOppFirmPage, 'true', 'false')}">{!OpposingFirm}</apex:outputLink>
+            <apex:outputText value="{!OpposingFirm}" rendered="{!IF(isOppFirmPage, 'false', 'true')}"/>             
+            </td>                       
+            <td style="text-align: right;">
+                <b>Audit Fee</b>
+            </td>
+            <td style="text-align: left; padding-right:20px">
+                <apex:outputText value="{0, number, currency}"> <apex:Param value="{!Audit__c.Audit_Fee_Paid__c}"/></apex:outputText>
+            </td>
+    
+        </tr>
+        <tr>
+            <td style="text-align: right;">
+                <b>MR Number</b>
+            </td>
+            <td style="text-align: left;">
+                <apex:outputText value="{!Audit__c.Patient_MR__c}"/> 
+            </td>           
+            <td style="text-align: right;">
+                <b>Opposing Auditor</b>
+            </td>                       
+            <td style="text-align: left;">
+            <apex:outputLink value="{!OppAuditorPage}" rendered="{!IF(isOppAuditorPage, 'true', 'false')}">{!OpposingAuditor}</apex:outputLink>
+            <apex:outputText value="{!OpposingAuditor}" rendered="{!IF(isOppAuditorPage, 'false', 'true')}"/>               
+            </td>                                   
+            <td style="text-align: right;">
+                <b>Total Line Items</b>
+            </td>
+            <td style="text-align: left; padding-right:20px">
+                <apex:outputText id="titems" value="{0, number, integer}"> <apex:Param value="{!Audit__c.Tot_Items__c}"/></apex:outputText>
+            </td>
+    
+        </tr>
+        <tr>
+            <td style="text-align: right;">
+                <b>Date(s) of Service</b>
+            </td>
+            <td style="text-align: left;">
+                {!DOS}
+            </td>           
+            <td style="text-align: right;">
+                <b>Opposing Scheduler</b>
+            </td>
+            <td style="text-align: left;">
+            <apex:outputLink value="{!OppSchedulerPage}" rendered="{!IF(isOppSchedulerPage, 'true', 'false')}">{!OpposingScheduler}</apex:outputLink>
+            <apex:outputText value="{!OpposingScheduler}" rendered="{!IF(isOppSchedulerPage, 'false', 'true')}"/>               
+            </td>           
+            <td style="text-align: right;">
+                <b>Flagged Items</b>
+            </td>
+            <td style="text-align: left; padding-right:20px">
+                <apex:outputText id="tflags" value="{0, number, integer}"> <apex:Param value="{!Audit__c.Flagged_Items__c}"/></apex:outputText>
+            </td>   
+        </tr>
+        
+        <tr>
+            <td style="text-align: right;">
+                <b>Pre-Audit Disallowances</b>
+            </td>
+            <td style="text-align: left;">
+                <apex:outputText value="{0, number, currency}"> <apex:Param value="{!Audit__c.Pre_Audit_Dis__c}"/></apex:outputText>
+            </td>           
+            <td style="text-align: right;">
+                <b>Opposing Firm Case ID</b>
+            </td>
+            <td style="text-align: left;">
+            <apex:outputText value="{!Audit__c.Opposing_Audit_Case_ID__c}"/>              
+            </td>           
+            <td style="text-align: right;">
+                <b>LOI Audit Amount</b>
+            </td>
+            <td style="text-align: left; padding-right:20px">
+                <apex:outputText value="{0, number, currency}"> <apex:Param value="{!Audit__c.Audit_Amount__c}"/></apex:outputText>
+            </td>   
+        </tr>
+        
+    </table>
+    </div>
+    </apex:pageBlock>
+    
+    <apex:outputPanel id="totals" layout="block">
+    <table border="1" width="100%">
+        <tr style="text-align:center; background-color:#F8F8F8" >           
+            <td>Total Billed</td>
+            <td>Underbilled</td>
+            <td>Unbilled</td>
+            <td>Total Underbilled</td>
+            <td>Total Overbilled</td>
+            <td>Disallowed</td>
+            <td>Net Adjustment</td>            
+            <td>Revised Total</td>
+            <td>Disputed</td>
+        </tr>
+        <tr style="text-align:right;">
+            <td><apex:outputField id="tbill" value="{!Audit__c.TAmt_Billed__c}"/></td>     
+            <td><apex:outputField id="tund" value="{!Audit__c.TAmt_Under__c}"/></td>      
+            <td><apex:outputField id="tunb" value="{!Audit__c.TAmt_Unbill__c}"/></td>     
+            <td><apex:outputField id="tsumu" value="{!Audit__c.TAmt_SumUnder__c}"/></td>       
+            <td><apex:outputField id="tsumo" value="{!Audit__c.TAmt_SumOver__c}"/></td>        
+            <td><apex:outputField id="tdisa" value="{!Audit__c.TAmt_Disallowed__c}"/></td>     
+            <td><apex:outputField id="tadj" value="{!Audit__c.TAmt_Adj__c}"/></td>        
+            <td><apex:outputField id="trev" value="{!Audit__c.TAmt_Revised__c}"/></td>        
+            <td><apex:outputField id="tdisp" value="{!Audit__c.TAmt_Disputed__c}"/></td>                   
+        </tr>
+    </table>
+    </apex:outputPanel>
+    <br />
+    
+    <apex:outputPanel id="tabs" layout="block" style="width:100%">
+    <apex:tabPanel switchType="client" selectedTab="billtab" id="theTabPanel" tabClass="activeTab" inactiveTabClass="inactiveTab">
+        <apex:tab label="Bill Detail View/Edit" name="billtab" id="tabBillTab" >
+            <div id="gridtools" style="width:100%;">
+                Style: 
+                  <select onChange="theBillGrid.setSkin(this.value)">
+                    <option value="gray" selected="selected">Gray</option>
+                    <option value="xp">XP</option>
+                    <option value="clear">Clear</option>
+                    <option value="modern">Modern</option>
+                    <option value="light" >Light</option>
+                    <option value="dhx_skyblue">Skyblue</option>                    
+                </select>
+                <button id="printGrid" type="button" onclick="printGrid()">Print</button>                
+                <button id="clearFilters" type="button" onclick="clearAllFilters()">Clear Filters</button>
+                Group By:
+                <button id="groupDate" type="button" onclick="groupByDate()">Date</button>
+                <button id="groupDept" type="button" onclick="groupByDept()">Dept</button>
+                <button id="groupCharge" type="button" onclick="groupByCharge()">Charge Code</button>
+                <button id="groupDesc" type="button" onclick="groupByDesc()">Description</button>
+                <button id="groupRevcode" type="button" onclick="groupByRevcode()">Rev Code</button>               
+                <button id="groupAdjcode" type="button" onclick="groupByAdjcode()">Adj Code</button>               
+                <button id="groupReset" type="button" onclick="groupReset()">Reset</button>
+                <span id="noEdits" style="display: none; color: red;">&nbsp;Bill Analysis Complete - Editing Disabled</span>                
+                <button id="caseReport" type="button" onclick="genReport()" style="float:right;">Case Report</button>                
+                <button id="billDone" type="button" onclick="billDone()" style="float:right;">Analysis Complete</button>                
+            
+            </div>
+            <hr />                              
+            <div id="BillGrid" style="width:100%; height:300px;">               
+            </div>      
+        </apex:tab>   
+        <apex:tab label="Add Unbilled Item or New Item/Adjustment" name="addtab" id="tabAddTab" ontabenter="addItemInit()">
+            <span id="addlinedisabled" style="display: none; color: red;">&nbsp;Bill Analysis Complete - Editing Disabled</span>
+            <div id="addlineloading" style="display: inline">Loading data... please wait</div>
+            <div id="addline" style="width:100%; visibility:hidden">
+            <form>
+                <table width="100%">
+                <tr><td>
+                    <span id="adduspan"><input type="radio" name="addtype" value="addu" id="addu" onclick="radioClick(this.id)"/>Add Unbilled Item as correction to existing bill <br/></span>
+                    </td>
+                    <td>
+                    <button type="button" id="clonebut" onclick="cloneClick()">Clone Currently Selected Item in Bill View Grid</button>                 
+                    </td>
+                    <td>
+                    <button type="button" id="gensumbut" onclick="genNonAdj()" style="visibility: hidden">Generate Non-Adjusted Items Summary Line</button>
+                    </td></tr>
+                <tr><td>                    
+                    <input type="radio" name="addtype" value="addn" id="addn" onclick="radioClick(this.id)"/>Add New Item or Summary Adjustment Line to create a bill<br/>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td></tr>              
+                </table>
+                <table class="aitable" width="100%">
+                <tr>           
+                    <th class="aihh">Date</th>  
+                    <th class="aihh">Dept</th>
+                    <th class="aihh">Charge Code</th>
+                    <th class="aihh">&nbsp;</th>
+                    <th class="aihh">Description</th>
+                    <th class="aihh">&nbsp;</th>
+                    <th class="aihh">$/Unit</th>
+                    <th class="aihh">Qty</th>
+                    <th class="aihh">$Tot</th>              
+                </tr>
+                <tr align="center">
+                    <td><select id="aidate" onchange="aiFields()">
+                        <option></option>
+                    </select></td>
+                    <td><select id="aidept" onchange="aiFields()">
+                        <option></option>
+                    </select></td>
+                    <td style="padding: 0px; width: 40px"><input type="text" size="10" id="aicdmcode" onchange="aiFields()"></input>
+                    </td>
+                    <td align="left" style="width: 20px;">
+                        <a href="javascript:popCDMCodeSearch()" id="codesearch"  title="CDM Code Lookup (New Window)">
+                        <img src="/s.gif" alt="CDM Code Lookup (New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="CDM Code Lookup (New Window)"/>
+                        </a>                        
+                    </td>
+                    <td style="padding-left: 10px; padding-right: 0px; width: 100px"><input type="text" size="25" id="aicdmdesc" onchange="aiFields()"></input>
+                    </td>
+                    <td align="left" style="width: 20px;">
+                        <a href="javascript:popCDMDescSearch()" id="descsearch"  title="CDM Description Lookup (New Window)">
+                        <img src="/s.gif" alt="CDM Description Lookup (New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="CDM Description Lookup (New Window)"/>
+                        </a>                                            
+                    </td>
+                    
+                    <td><input type="text" size="9" id="aiunit" onchange="doItemCalc(this.id)"></input>
+                    </td>
+                    <td><input type="text" size="4" id="aiqty" onchange="doItemCalc(this.id)"></input>
+                    </td>
+                    <td><input type="text" size="10" id="aitot" onchange="doItemCalc(this.id)"></input>
+                    </td>   
+                </tr>
+                                
+                </table>
+                </form>
+                <hr />
+                <div id="addreason" style="width:100%">
+                    <table style="margin-left:auto; margin-right:auto;">
+                    <tr>
+                    <td valign="bottom"><span style="font-size:120%">Reason Code: </span></td>
+                    <td><select id="aireason">
+                        <option selected="selected" value="X1">X1 - Not Originally Billed</option>
+                        <option value="X2">X2 - Change in Policy or Procedure</option>
+                        <option value="X3">X3 - New to CDM</option>
+                        <option value="X4">X4 - Keying Error</option>
+                        <option value="X5">X5 - Departmental Error</option>
+                        <option value="X6">X6 - Not Normally Billed</option>
+                        <option value="X0">X0 - Level Discrepancy</option>
+                    </select></td>                  
+                    <td><button id="aibutton" type="button" onclick="addItem()" style="color:LightGray; font-size:120%">Add Unbilled Item</button></td>
+                    <td><img name="waitspin1" src="{!URLFOR($Resource.pixgif)}"/></td>
+                    </tr>
+                    </table>                    
+                </div>
+                <div id="addsummary" style="width:100%; display:none">
+                <table style="margin-left:auto; margin-right:auto;">
+                    <tr>
+                    <td><button id="asbutton" type="button" onclick="addItem()" style="color:LightGray; font-size:120%">Add Item/Adjustment Entry</button></td>
+                    <td><img name="waitspin2" src="{!URLFOR($Resource.pixgif)}"/></td>
+                    </tr>
+                    </table>
+                </div>
+            </div>
+            <div id="htmlconverter" style="display:none;"></div>
+        </apex:tab>         
+    </apex:tabPanel>         
+    </apex:outputPanel>
+    
+</apex:page>

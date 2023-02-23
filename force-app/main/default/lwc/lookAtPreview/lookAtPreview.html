@@ -1,0 +1,124 @@
+<template>
+    <lightning-spinner alternative-text="Loading" size="large" if:true={showSpinner}></lightning-spinner>
+    <div if:true={isPdfCreated}>
+        <div class="slds-grid slds-wrap slds-grid_align-center container">
+            <div class="slds-col slds-size_1-of-3">
+                <div class="slds-grid slds-wrap slds-grid_align-center">
+                    <div class="slds-col slds-size_1-of-5 slds-text-align_right">
+                        <img src={fileIcon}>
+                    </div>
+                    <div class="slds-col slds-size_4-of-5">
+                        <div class="document-name">
+                            {docName}
+                        </div>
+                        <div class="document-date-size">
+                            {docDate} | {docSize}
+                        </div>
+                        <div>
+                            <a href={downloadDocUrl}
+                               class="slds-button slds-button_outline-brand slds-align_absolute-center custom-btn" >
+                                <lightning-icon icon-name="utility:download"
+                                                class="download-icon"
+                                                size="xx-small"
+                                ></lightning-icon>
+                                &nbsp;Download Doc
+                            </a>
+                        </div>
+                        <div>
+                            <button class="slds-button slds-button_outline-brand slds-align_absolute-center custom-btn"
+                                    type=button
+                                    onclick={previewHandler}
+                                    data-id={docId}>
+                                <lightning-icon icon-name="utility:preview"
+                                                class="download-icon"
+                                                size="xx-small"
+                                ></lightning-icon>
+                                &nbsp; Preview Doc
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-col slds-size_1-of-3">
+                <div class="slds-grid slds-wrap slds-grid_align-center">
+                    <div class="slds-col slds-size_1-of-5 slds-text-align_right">
+                        <img src={fileIcon}>
+                    </div>
+                    <div class="slds-col slds-size_4-of-5">
+                        <div class="document-name">
+                            {pdfName}
+                        </div>
+                        <div class="document-date-size">
+                            {pdfDate} | {pdfSize}
+                        </div>
+                        <div>
+                            <a href={downloadPDFUrl}
+                               class="slds-button slds-button_outline-brand slds-align_absolute-center custom-btn" >
+                                <lightning-icon icon-name="utility:download"
+                                                class="download-icon"
+                                                size="xx-small"
+                                ></lightning-icon>
+                                &nbsp; Download PDF
+                            </a>
+                        </div>
+                        <div>
+                            <button class="slds-button slds-button_outline-brand slds-align_absolute-center custom-btn"
+                                    type=button
+                                    onclick={previewHandler}
+                                    data-id={pdfId}>
+                                <lightning-icon icon-name="utility:preview"
+                                                class="download-icon"
+                                                size="xx-small"
+                                ></lightning-icon>
+                                &nbsp; Preview PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div if:false={isPdfCreated}>
+        <div class="slds-grid slds-wrap slds-grid_align-center container">
+            <div class="slds-col slds-size_1-of-3">
+                <div class="slds-grid slds-wrap slds-grid_align-center">
+                    <div class="slds-col slds-size_1-of-5 slds-text-align_right">
+                        <img src={fileIcon}>
+                    </div>
+                    <div class="slds-col slds-size_4-of-5">
+                        <div class="document-name">
+                            {docName}
+                        </div>
+                        <div class="document-date-size">
+                            {docDate} | {docSize}
+                        </div>
+                        <div>
+                            <a href={downloadDocUrl}
+                               class="slds-button slds-button_outline-brand slds-align_absolute-center custom-btn" >
+                                <lightning-icon icon-name="utility:download"
+                                                class="download-icon"
+                                                size="xx-small"
+                                ></lightning-icon>
+                                &nbsp;Download Doc
+                            </a>
+                        </div>
+                        <div>
+                            <button class="slds-button slds-button_outline-brand slds-align_absolute-center custom-btn"
+                                    type=button
+                                    onclick={previewHandler}
+                                    data-id={docId}>
+                                <lightning-icon icon-name="utility:preview"
+                                                class="download-icon"
+                                                size="xx-small"
+                                ></lightning-icon>
+                                &nbsp; Preview Doc
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</template>

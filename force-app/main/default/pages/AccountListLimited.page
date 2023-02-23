@@ -1,0 +1,41 @@
+<apex:page Controller="AcctListLimitedController" action="{!testLimited}" showHeader="true" tabStyle="Account" >
+
+	<apex:PageBlock title="My Accounts">
+		<apex:PageBlockTable value="{!myAccountList}" var="a">
+			<apex:column headerValue="Facility Name">
+        		<apex:outputLink value="{!a.flink}">{!a.fname}</apex:outputLink>
+        	</apex:column> 
+        	<apex:column headerValue="Facility Type">
+        		<apex:outputText value="{!a.ftype}"/>
+        	</apex:column> 
+        	
+        	<apex:column headerValue="Pending Audits">
+        		<apex:outputText value="{!a.myPending}"/>
+        	</apex:column>
+        	<apex:column headerValue="Scheduled Audits">
+        		<apex:outputText value="{!a.myScheduled}"/>
+        	</apex:column>
+        	<apex:column headerValue="Audits To Be Closed">
+        		<apex:outputText value="{!a.myExited}"/>
+        	</apex:column>        	
+        	<apex:column headerValue="Street Address">
+        		<apex:outputText value="{!a.street}"/>
+        	</apex:column>
+        	<apex:column headerValue="City">
+        		<apex:outputText value="{!a.city}"/>
+        	</apex:column>
+        	<apex:column headerValue="State">
+        		<apex:outputText value="{!a.state}"/>
+        	</apex:column>
+        	<apex:column headerValue="Zip">
+        		<apex:outputText value="{!a.zip}"/>
+        	</apex:column>
+			<apex:column headerValue="Medlinks Account Manager">
+        		<apex:outputLink value="{!a.olink}">{!a.oname}</apex:outputLink>
+        	</apex:column>
+        	
+		</apex:PageBlockTable>	
+	</apex:PageBlock>
+
+
+</apex:page>

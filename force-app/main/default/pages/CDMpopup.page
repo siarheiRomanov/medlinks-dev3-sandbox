@@ -1,0 +1,106 @@
+<apex:page standardController="CDMItem__c" extensions="CDMpopupExt" showHeader="false" sidebar="false">
+
+<style type="text/css">
+table.pay {
+	border-width: 1px;
+	border-spacing: 0px;
+	border-style: outset;
+	border-color: blue;
+	border-collapse: collapse;
+	background-color: rgb(255, 255, 240);
+}
+table.pay th {
+	border-width: 1px;
+	padding: 1px;
+	border-style: inset;
+	border-color: black;
+	background-color: white;
+	text-align: center;
+	width: 14%;	
+}
+table.sample td {
+	border-width: 1px;
+	padding: 1px;
+	border-style: inset;
+	border-color: blue;
+	background-color: white;
+}
+</style>
+
+
+<apex:pageBlock >
+	 <apex:outputText value="{!CDMItem__c.CDM_Master__r.Effective_Date_Start__c} {!CDMItem__c.CDM_Master__r.Effective_Date_End__c}" 
+   	 rendered="false" />
+   
+	<apex:pageBlockSection showheader="false" columns="2">
+
+		<apex:outputField value="{!CDMItem__c.CDM_Master__r.Facility__c}"/>
+		<apex:pageBlockSectionItem >
+        	<apex:outputLabel value="Effective Dates" for="effective"/>
+            <apex:outputText value="{!dates}" id="effective"/> 
+        </apex:pageBlockSectionItem>
+		<apex:outputField value="{!CDMItem__c.CDM_Master__c}"/>			
+		<apex:outputField value="{!CDMItem__c.CDM_Master__r.Item_Count__c}"/>
+	</apex:pageBlockSection>
+</apex:pageBlock>
+<apex:pageBlock mode="maindetail">
+	<apex:pageBlockSection showheader="false" columns="2">
+		
+		<apex:outputField value="{!CDMItem__c.Name}"/>
+		<apex:outputField value="{!CDMItem__c.Charge_Amount__c}"/>
+		
+		<apex:outputField value="{!CDMItem__c.Charge_Description__c}"/>
+		<apex:outputField value="{!CDMItem__c.Billing_Description__c}"/>
+		    
+		<apex:outputField value="{!CDMItem__c.Audit_Dept__c}"/>
+		<apex:outputField value="{!CDMItem__c.Facility_Dept__c}"/>
+
+		<apex:outputField value="{!CDMItem__c.Facility_Rev_Center__c}"/>
+		<apex:pageBlockSectionItem >
+		</apex:pageBlockSectionItem>
+    </apex:pageBlockSection>
+</apex:pageBlock>
+    
+    <apex:outputPanel id="payers" layout="block">
+		<table class="pay" width="100%">
+			<tr style="text-align:center; background-color:#F8F8F8" >           
+	        	<th style="text-align:right;">Payer:</th>	
+	        	<th>COM</th>
+	        	<th>BC</th>
+				<th>MCR</th>
+				<th>MCL</th>
+				<th>MCD</th>
+				<th>WC</th>
+			</tr>
+			<tr style="text-align:center; background-color:#F8F8F8" >           
+	        	<th style="text-align:right;">Revenue Code:</th>
+	        	<td><apex:outputLabel value="" for="idcom"/><apex:outputField id="idcom" value="{!CDMItem__c.COM_Rev_Code__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idbc"/><apex:outputField id="idbc" value="{!CDMItem__c.BC_Rev_Code__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idmcr"/><apex:outputField id="idmcr" value="{!CDMItem__c.MCR_Rev_Code__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idmcl"/><apex:outputField id="idmcl" value="{!CDMItem__c.MCL_Rev_Code__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idmcd"/><apex:outputField id="idmcd" value="{!CDMItem__c.MCD_Rev_Code__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idwc"/><apex:outputField id="idwc" value="{!CDMItem__c.WC_Rev_Code__c}"/></td>	     
+			</tr>
+			<tr style="text-align:center; background-color:#F8F8F8" >           
+	        	<th style="text-align:right;">Revenue Category:</th>
+	        	<td><apex:outputLabel value="" for="idccom"/><apex:outputField id="idccom" value="{!CDMItem__c.COM_Rev_Category__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idcbc"/><apex:outputField id="idcbc" value="{!CDMItem__c.BC_Rev_Category__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idcmcr"/><apex:outputField id="idcmcr" value="{!CDMItem__c.MCR_Rev_Category__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idcmcl"/><apex:outputField id="idcmcl" value="{!CDMItem__c.MCL_Rev_Category__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idcmcd"/><apex:outputField id="idcmcd" value="{!CDMItem__c.MCD_Rev_Category__c}"/></td>
+	        	<td><apex:outputLabel value="" for="idcwc"/><apex:outputField id="idcwc" value="{!CDMItem__c.WC_Rev_Category__c}"/></td>	     
+			</tr>
+			<tr style="text-align:center; background-color:#F8F8F8" >           
+	        	<th style="text-align:right;">HCPCS/CPT Code:</th>
+	        	<td><apex:outputText value="{!CDMItem__c.COM_HCPCS_Code__c}"/></td>
+	        	<td><apex:outputText value="{!CDMItem__c.BC_HCPCS_Code__c}"/></td>
+	        	<td><apex:outputText value="{!CDMItem__c.MCR_HCPCS_Code__c}"/></td>
+	        	<td><apex:outputText value="{!CDMItem__c.MCL_HCPCS_Code__c}"/></td>
+	        	<td><apex:outputText value="{!CDMItem__c.MCD_HCPCS_Code__c}"/></td>
+	        	<td><apex:outputText value="{!CDMItem__c.WC_HCPCS_Code__c}"/></td>	        	
+			</tr>
+		</table>
+	</apex:outputPanel>
+
+
+</apex:page>

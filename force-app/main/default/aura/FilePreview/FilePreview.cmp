@@ -1,0 +1,55 @@
+<aura:component description="FilePreview" controller="FilePreviewAndDownloadCtrl" implements="forceCommunity:availableForAllPageTypes">
+    <aura:attribute name="successLabelUpperCase"             type="String" default="SUCCESS"/>
+    <aura:attribute name="contentDocumentIds"                type="List"   default=""/>
+    <aura:attribute name="contentDocIdToContentVersionTitle" type="Object" default=""/>
+    <aura:attribute name="contentVersionTitles"              type="List"   default=""/>
+    <aura:attribute name="columns"                           type="List"   default=""/>
+    <aura:attribute name="sortDirection"                     type="String" default="asc" />
+    <aura:attribute name="defaultSortDirection"              type="String" default="asc" />
+    <aura:attribute name="sortedBy"                          type="String"/>
+    <aura:attribute name="selectedDocumentIds"               type="List"/>
+    <aura:attribute name="selectedContentTitles"             type="List"/>
+    <aura:attribute name="isValidToken"                      type="Boolean" default="false"/>
+    <aura:attribute name="showSpinner"                       type="Boolean" default="true"/>
+
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+
+    <aura:if isTrue="{!v.showSpinner}">
+        <lightning:spinner alternativeText="Loading" size="large" />
+    </aura:if>
+
+    <aura:if isTrue="{!v.isValidToken}">
+        <div class="slds-p-top_medium slds-p-horizontal_medium table-style">
+            <div class="slds-p-horizontal_medium file-datatable" style="width: 40%;">
+                <lightning:datatable aura:id              = "file-datatable"
+                                     keyField             = "Id"
+                                     columns              = "{!v.columns}"
+                                     data                 = "{!v.contentDocIdToContentVersionTitle}"
+                                     hideCheckboxColumn   = "false"
+                                     defaultSortDirection = "{!v.defaultSortDirection}"
+                                     sortedDirection      = "{!v.sortDirection}"
+                                     sortedBy             = "{!v.sortedBy}"
+                                     onsort               = "{!c.handleSort}"
+                                     onrowselection       = "{!c.handleRowAction}"
+                >
+                </lightning:datatable>
+            </div>
+
+            <div class="slds-p-horizontal_medium files-style">
+                <div class="inner-files-style">
+                    <aura:iteration items="{!v.selectedDocumentIds}" var="item">
+                        <div class="slds-p-bottom_medium">
+                            <strong class="slds-align_absolute-center">{!item.title}</strong>
+                            <lightning:fileCard fileId="{!item.docId}" hideDescription="true"/>
+                        </div>
+                    </aura:iteration>
+                </div>
+            </div>
+        </div>
+
+        <aura:set attribute="else">
+            <strong class="slds-align_absolute-center font-error-text-style">Dear Client</strong><br/>
+            <strong class="slds-align_absolute-center font-error-text-style">available documents will be displayed here.</strong>
+        </aura:set>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,596 @@
+<apex:page standardController="Account" extensions="AccountAuditViewExt" action="{!testAuditable}" showHeader="true" tabStyle="Account">
+<style>
+    .activeTab {font-size: 120%; background-color: #1797C0; color:white; background-image:none}
+    .inactiveTab {font-size: 120%; background-color: #F8F8F8; color:black; background-image:none}
+</style>
+
+<apex:sectionHeader title="Account Audit View" subtitle="{!Account.name}"/>
+    
+<apex:form >
+	<apex:pageBlock >
+	<apex:outputText value="{!account.Auditable__c} {!account.Audit_Client__c} {!account.Opposing_Audit_Account__c}"
+	rendered="false"/>
+	<apex:outputText value="{!Account.Facility_City__c} {!Account.Facility_State__c} {!Account.Facility_Zip__c} {!Account.Facility_Street__c}"
+	rendered="false"/>
+	<apex:outputText value="{!Account.Audits_NumPending__c} {!Account.Audits_AmtPending__c} {!Account.Audits_NumScheduled__c} {!Account.Audits_AmtScheduled__c}"
+	rendered="false"/>	
+	<apex:outputText value="{!Account.Audits_NumExited__c} {!Account.Audits_AmtExited__c} {!Account.Audits_NumDisputed__c} {!Account.Audits_AmtDisputed__c}"
+	rendered="false"/>	
+	<apex:outputText value="{!Account.Audits_NumAppealed__c} {!Account.Audits_AmtAppealed__c} {!Account.Audits_TotalNumActive__c} {!Account.Audits_TotalAmtActive__c}"
+	rendered="false"/>	
+	
+	<apex:outputPanel id="topline" layout="block">
+	<table width="100%">
+		<tr>
+			<td style="white-space:nowrap;" width="20%">
+			<apex:outputText style="text-align:left; font-size:150%" value="{!AccType} "></apex:outputText>			
+			<apex:outputLink value="{!AcctPageRef}" id="viewlink" rendered="{!NOT(MyAuditsOnly)}">[View/Edit]</apex:outputLink>
+ 		   </td>
+			<td style="text-align:center; white-space:normal;" width="60%">
+			<div><b>Next Scheduled Activity:</b> {!NextEvent}<br />
+				<apex:outputLink value="{!EventPage}" id="evlink" rendered="{!IF(NextTime != '','true', 'false')}"><b>{!NextTime}</b></apex:outputLink></div>
+			</td>
+			<td width="20%" style="text-align:right; padding-right:15px">
+			<apex:actionRegion >
+			<apex:selectList value="{!SelectedAuditor}" size="1" id="selbox" multiselect="false">
+            	<apex:selectOptions value="{!Auditors}"/>
+            	<apex:actionSupport event="onchange" action="{!changeAuditor}" reRender="acctbody, theTabPanel, selbox" />
+       		</apex:selectList><p/>
+       		</apex:actionRegion>
+			</td>
+		</tr>
+		
+	</table>
+	
+	</apex:outputPanel>
+	<apex:outputPanel id="acctbody" layout="block">
+	<table width="100%">
+		<tr>
+			<td style="text-align: right;">
+				<b>Type</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputField value="{!Account.Type}"/> 
+			</td>			
+			<td style="text-align: right;">
+				<b>{!FacilityLabel}</b>
+			</td>
+			<td style="text-align: left;">
+				{!FacilityStreet}
+			</td>			
+			<td style="text-align: right;">
+				<b>Pending Audits</b>
+			</td>
+			<td style="text-align: left; padding-right:20px">
+				<apex:outputText value="{0, number, integer}"> <apex:Param value="{!NumPending}"/></apex:outputText>
+				<apex:outputText value=" - {0, number, currency}"> <apex:Param value="{!AmtPending}"/></apex:outputText>
+			</td>
+	
+		</tr>
+		<tr>
+			<td style="text-align: right;">
+				<b>Account Address</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputField value="{!Account.BillingStreet}"/> 
+			</td>			
+			<td style="text-align: right;">
+				<b> </b>
+			</td>
+			<td style="text-align: left;">
+				{!FacilityCSZ}
+			</td>			
+			<td style="text-align: right;">
+				<b>Scheduled Audits</b>
+			</td>
+			<td style="text-align: left; padding-right:20px">
+				<apex:outputText value="{0, number, integer}"> <apex:Param value="{!NumScheduled}"/></apex:outputText>
+				<apex:outputText value=" - {0, number, currency}"> <apex:Param value="{!AmtScheduled}"/></apex:outputText>
+			</td>
+	
+		</tr>
+		<tr>
+			<td style="text-align: right;">
+				<b> </b>
+			</td>
+			<td style="text-align: left;">
+				{!Account.BillingCity}, {!Account.BillingState} {!Account.BillingPostalCode}
+			</td>			
+			<td style="text-align: right;">
+				<b>{!ContactLabel}</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputLink value="{!FCPage}" id="fclink" rendered="{!IF(isFCPage, 'true', 'false')}">{!FirstContactName}</apex:outputLink>
+				<apex:outputText value="{!FirstContactName}" rendered="{!IF(isFCPage, 'false', 'true')}"/>
+				<apex:outputText value=" {!FirstContactTel}"/>
+			</td>			
+			<td style="text-align: right;">
+				<b>Exited - Not Closed</b>
+			</td>
+			<td style="text-align: left; padding-right:20px">
+				<apex:outputText value="{0, number, integer}"> <apex:Param value="{!NumExited}"/></apex:outputText>
+				<apex:outputText value=" - {0, number, currency}"> <apex:Param value="{!AmtExited}"/></apex:outputText>
+			</td>
+	
+		</tr>
+		
+		<tr>
+			<td style="text-align: right;">
+				<b>Main Phone</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputField value="{!Account.Phone}"/>
+			</td>			
+			<td style="text-align: right;">
+				<b> </b>
+			</td>
+			<td style="text-align: left;">
+				<a href="mailto:{!FirstContactEmail}">{!FirstContactEmail}</a> 						
+			</td>			
+			<td style="text-align: right;">
+				<b>In Dispute</b>
+			</td>
+			<td style="text-align: left; padding-right:20px">
+				<apex:outputText value="{0, number, integer}"> <apex:Param value="{!NumDisputed}"/></apex:outputText>
+				<apex:outputText value=" - {0, number, currency}"> <apex:Param value="{!AmtDisputed}"/></apex:outputText>
+			</td>
+	
+		</tr>
+		<tr>
+			<td style="text-align: right;">
+				<b>Fax</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputField value="{!Account.Fax}"/>
+			</td>			
+			<td style="text-align: right;">
+				<b>{!MRLabel}</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputLink value="{!MRPage}" id="mrlink" rendered="{!IF(isMRPage, 'true', 'false')}">{!MRName}</apex:outputLink>
+				<apex:outputText value="{!MRName}" rendered="{!IF(isMRPage, 'false', 'true')}"/>
+				<apex:outputText value=" {!MRTel}"/>
+			</td>			
+			<td style="text-align: right;">
+				<b>Appealed</b>
+			</td>
+			<td style="text-align: left; padding-right:20px">
+				<apex:outputText value="{0, number, integer}"> <apex:Param value="{!NumAppealed}"/></apex:outputText>
+				<apex:outputText value=" - {0, number, currency}"> <apex:Param value="{!AmtAppealed}"/></apex:outputText>
+			</td>
+	
+		</tr>
+		<tr>
+			<td style="text-align: right;">
+				<b>Website</b>
+			</td>
+			<td style="text-align: left;">
+				<apex:outputField value="{!Account.Website}"/>
+			</td>			
+			<td style="text-align: right;">
+				<b> </b>
+			</td>
+			<td style="text-align: left;">
+				<a href="mailto:{!MREmail}">{!MREmail}</a> 									 						
+			</td>			
+			<td style="text-align: right;">
+				<b>All Audits</b>
+			</td>
+			<td style="text-align: left; padding-right:20px">
+				<apex:outputText value="{0, number, integer}"> <apex:Param value="{!NumTotal}"/></apex:outputText>
+				<apex:outputText value=" - {0, number, currency}"> <apex:Param value="{!AmtTotal}"/></apex:outputText>
+			</td>
+	
+		</tr>
+	
+	</table>
+	</apex:outputPanel>
+	</apex:pageBlock>
+	<apex:actionFunction name="refreshAllTab" immediate="true" action="{!setAllTabRenderFlag}" rerender="AllTabPageBlock" status="AllTabStatus"/>
+    <apex:actionFunction name="refreshPendingTab" immediate="true" action="{!setPendingTabRenderFlag}" rerender="PendingTabPageBlock" status="PendingTabStatus"/>
+    <apex:actionFunction name="refreshScheduledTab" immediate="true" action="{!setScheduledTabRenderFlag}" rerender="ScheduledTabPageBlock" status="ScheduledTabStatus"/>
+    <apex:actionFunction name="refreshExitedTab" immediate="true" action="{!setExitedTabRenderFlag}" rerender="ExitedTabPageBlock" status="ExitedTabStatus"/>
+    <apex:actionFunction name="refreshDisputedTab" immediate="true" action="{!setDisputedTabRenderFlag}" rerender="DisputedTabPageBlock" status="DisputedTabStatus"/>
+    <apex:actionFunction name="refreshAppealedTab" immediate="true" action="{!setAppealedTabRenderFlag}" rerender="AppealedTabPageBlock" status="AppealedTabStatus"/>
+    <apex:actionFunction name="refreshClosedTab"  immediate="true" action="{!setClosedTabRenderFlag}" rerender="ClosedTabPageBlock" status="ClosedTabStatus"/>
+    <apex:actionFunction name="refreshCanceledTab" immediate="true" action="{!setCanceledTabRenderFlag}" rerender="CanceledTabPageBlock" status="CanceledTabStatus"/>
+    <apex:actionFunction name="refreshSearchTab" immediate="true" action="{!setSearchTabRenderFlag}" rerender="SearchTabPageBlock" status="SearchTabStatus"/>
+    </apex:form>   		   		   		   	   		   		   		   		   			
+	
+	
+	<apex:tabPanel switchType="client" selectedTab="alltab" id="theTabPanel" tabClass="activeTab" inactiveTabClass="inactiveTab">
+        	
+        <apex:tab label="All Active" name="alltab" id="tabAllTab" ontabenter="refreshAllTab()">
+        	<apex:actionStatus id="AllTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="AllTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(AllTabRenderFlag, AllAuditorList, NullAuditList)}" var="audit" width="100%">
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id )}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Audit Stage">
+        				<apex:outputField value="{!audit.Audit_Stage__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        </apex:tab>
+       
+        	
+        <apex:tab label="Pending" name="pendingtab" id="tabPendingTab" ontabenter="refreshPendingTab()">
+       		<apex:actionStatus id="PendingTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="PendingTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(PendingTabRenderFlag, PendingAuditorList, NullAuditList)}" var="audit" width="100%" >
+					<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id )}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        		        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        	
+        </apex:tab>
+        <apex:tab label="Scheduled" name="scheduledtab" id="tabScheduledTab" ontabenter="refreshScheduledTab()">
+       		<apex:actionStatus id="ScheduledTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="ScheduledTabPageBlock">
+        		<apex:pageBlockTable value="{!IF(ScheduledTabRenderFlag, ScheduledAuditorList, NullAuditList)}" var="audit" width="100%" >
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id)}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        	
+        </apex:tab>
+        <apex:tab label="Exited" name="exitedtab" id="tabExitedTab" ontabenter="refreshExitedTab()">
+        	<apex:actionStatus id="ExitedTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="ExitedTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(ExitedTabRenderFlag, ExitedAuditorList, NullAuditList)}" var="audit" width="100%" >
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id)}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        
+        
+        </apex:tab>
+        <apex:tab label="In Dispute" name="disputedtab" id="tabDisputedTab" ontabenter="refreshDisputedTab()">
+        	<apex:actionStatus id="DisputedTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="DisputedTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(DisputedTabRenderFlag, DisputedAuditorList, NullAuditList)}" var="audit" width="100%" >
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id)}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        
+        
+        
+        </apex:tab>
+        <apex:tab label="Appealed" name="appealedtab" id="tabAppealedTab" ontabenter="refreshAppealedTab()">
+        	<apex:actionStatus id="AppealedTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="AppealedTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(AppealedTabRenderFlag, AppealedAuditorList, NullAuditList)}" var="audit" width="100%" >
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id)}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        
+        
+        
+        </apex:tab>
+        <apex:tab label="Closed" name="closedtab" id="tabClosedTab" ontabenter="refreshClosedTab()">
+        	<apex:actionStatus id="ClosedTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="ClosedTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(ClosedTabRenderFlag, ClosedAuditorList, NullAuditList)}" var="audit" width="100%">
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id)}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        
+        
+        
+        </apex:tab>
+        <apex:tab label="Canceled" name="canceledtab" id="tabCanceledTab" ontabenter="refreshCanceledTab()">
+        	<apex:actionStatus id="CanceledTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="CanceledTabPageBlock" >
+        		<apex:pageBlockTable value="{!IF(CanceledTabRenderFlag, CanceledAuditorList, NullAuditList)}" var="audit" width="100%">
+        			<apex:column headerValue="Audit Number">
+        				<apex:outputLink value="{!URLFOR($Action.Audit__c.View, audit.Id)}">{!audit.Name}</apex:outputLink>
+        			</apex:column>
+        			<apex:column headerValue="Patient Name">
+        				<apex:outputField value="{!audit.Patient_Name__c}"/>
+        			</apex:column> 
+        			<apex:column headerValue="Patient Acct">
+        				<apex:outputField value="{!audit.Patient_Account__c}"/>
+        			</apex:column>         			        			
+        			<apex:column headerValue="Audit Type">
+        				<apex:outputField value="{!audit.Audit_Type__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="Audit Role">
+        				<apex:outputField value="{!audit.Audit_Role__c}"/>
+        			</apex:column>
+        			<apex:column headerValue="LOI Date">
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">        				
+        				<apex:param value="{!audit.Date_LOI__c}"/>
+        				</apex:outputText>
+        			</apex:column>
+        			<apex:column headerValue="Auditor">
+        				<apex:outputField value="{!audit.Assigned_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Opposing">
+        				<apex:outputField value="{!audit.Opposing_Auditor__r.Name}"/>
+        			</apex:column>
+        			<apex:column headerValue="Exit (*Proposed)">        			 
+        				<apex:outputText value="{0,date,MM-dd-yyyy}">
+        					<apex:param value="{!IF(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'),DATEVALUE(audit.Date_Proposed_Exit__c),DATEVALUE(audit.Date_Actual_Exit__c))}"/> 
+        				</apex:outputText>        				
+        				<apex:outputText value="{!IF(AND(OR(audit.Audit_Stage__c = 'Pending', audit.Audit_Stage__c = 'Scheduled'), NOT(ISBLANK(audit.Date_Proposed_Exit__c))), '*', '')}">
+        				</apex:outputText>        				        			        			
+        			</apex:column>
+					<apex:column headerValue="Amount">
+        				<apex:outputField value="{!audit.Audit_Amount__c}"/>
+        			</apex:column>        			        			        	
+        	
+        	
+        		</apex:pageBlockTable>                      
+        	</apex:pageBlock>        
+        
+        
+        
+        </apex:tab>
+        <apex:tab label="SEARCH" name="searchtab" id="tabSearchTab" ontabenter="refreshSearchTab()">
+        	<apex:actionStatus id="SearchTabStatus" startText="Loading..." stopText=""/>
+        	<apex:pageBlock id="SearchTabPageBlock" >
+        		<apex:outputPanel id="theSearchPanel" layout="block">
+        		
+    	    		Search Dialog!
+        	
+	        	</apex:outputPanel>
+        	</apex:pageBlock>        
+                
+        </apex:tab>
+        
+    </apex:tabPanel>
+	
+</apex:page>

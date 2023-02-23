@@ -1,0 +1,17 @@
+<!-- Appeal Field Set Input -->
+<template>
+    <lightning-spinner alternative-text="Loading" size="large" if:true={showSpinner}></lightning-spinner>
+    <lightning-card title="Appeal Letter Fields" icon-name="standard:email">
+        <template if:true={fieldSetFields.length}>
+            <lightning-record-edit-form object-api-name="Appeal__c" record-id={recordId} onsuccess={handleSuccess} onerror={handleError}>
+                <lightning-messages></lightning-messages>
+                <div class="slds-m-around_medium">
+                    <template for:each={fieldSetFields} for:item="fieldSetField">
+                        <lightning-input-field key={fieldSetField} field-name={fieldSetField}></lightning-input-field>
+                    </template>
+                </div>
+                <input type="submit" class="hidden" />
+            </lightning-record-edit-form>
+        </template>
+    </lightning-card>
+</template>

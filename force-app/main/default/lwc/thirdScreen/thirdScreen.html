@@ -1,0 +1,53 @@
+<template>
+    <div class="slds-m-around_medium slds-text-body_regular">
+        <p>To send email, please choose files you want to attach, email template (editable) and recipient</p>
+    </div>
+
+    <div class="slds-m-around_medium">
+        <c-multiselect-attachments all-attachments={allAttachments}></c-multiselect-attachments>
+    </div>    
+
+    <div class="slds-m-around_medium">
+        <lightning-layout horizontal-align="spread" >
+            <lightning-layout-item  class="slds-size_8-of-12">
+                <c-search-templates label="Select Email Template"
+                                    options={templateOptions}
+                                    placeholder="Search Templates..."
+                                    onselectoption={handleListChange}
+                                    >
+                </c-search-templates>
+                
+            </lightning-layout-item>
+            <lightning-layout-item class="slds-size_4-of-12 slds-p-left_medium" >
+                <div>
+                    <lightning-record-edit-form object-api-name="Opportunity">
+                        <label for="inputContact" style="font-size:12px;">Select Recipient</label>
+                        <lightning-input-field class="lightning-input-field"
+                                id="inputContact"
+                                field-name="ContactId"
+                                variant="label-hidden"
+                                onchange={handleLookupChange}
+                                required="true"
+                        ></lightning-input-field>
+                    </lightning-record-edit-form>
+                </div>               
+            </lightning-layout-item>
+            
+        </lightning-layout>
+    </div>
+
+    <div class="slds-p-around-small">
+        <div class="slds-m-around_medium">
+            <lightning-input-rich-text
+                    value={body}
+                    onchange={handleBodyChange}
+                    required
+            ></lightning-input-rich-text>
+        </div>   
+        
+    
+        <div class="slds-m-around_medium">
+            <lightning-button onclick={sendEmailHandler} label="Send Email" variant="brand-outline"></lightning-button>
+        </div>
+    </div>
+</template>

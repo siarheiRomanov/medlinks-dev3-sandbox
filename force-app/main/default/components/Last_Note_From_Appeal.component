@@ -1,0 +1,28 @@
+<apex:component id="Last_Note_From_Appeal" access="global" controller="LastNoteFromAppealController">
+    <apex:attribute name="appealId" type="String" description="Record Id" access="global" assignTo="{!currentAppealId}"/>
+
+    <style>
+        .columns-style {
+            padding: 2px;
+        }
+    </style>
+
+    <apex:dataTable value="{!notes}" var="note" border="1" width="100%">
+        <apex:column styleClass="columns-style">
+            <apex:facet name="header">Title</apex:facet>
+            {!note.Title}
+        </apex:column>
+
+        <apex:column styleClass="columns-style">
+            <apex:facet name="header">Note</apex:facet>
+            {!note.Body}
+        </apex:column>
+
+        <apex:column styleClass="columns-style">
+            <apex:facet name="header">Created Date</apex:facet>
+            <apex:outputText value="{0,date,MM-dd-yyyy}">
+                <apex:param value="{!note.CreatedDate}"/>
+            </apex:outputText>
+        </apex:column>
+    </apex:dataTable>
+</apex:component>

@@ -1,0 +1,22 @@
+<apex:page controller="AuditSchedStatusController" tabstyle="Audit__c" showHeader="false" sidebar="false">
+<apex:pageBlock >
+
+	<apex:panelGrid columns="2">
+		<apex:outputLink style="font-size:140%" value="{!notSchedView}" target="_blank">Total Unscheduled:</apex:outputLink>
+		<apex:outputText style="font-size:140%" value="{!notSched}"/>
+		<apex:outputLink style="font-size:140%" value="{!totSchedView}" target="_blank">Total Scheduled:</apex:outputLink>
+		<apex:outputText style="font-size:140%" value="{!totSched}"/>
+		<apex:outputLink style="font-size:140%; color:darkred" value="{!inviteBlockView}" target="_blank">Invite Blocked:</apex:outputLink>
+		<apex:outputText style="font-size:140%; color:darkred" value="{!inviteBlock}"/>		
+		<apex:outputLink style="font-size:140%; color:red" value="{!inviteReqView}" target="_blank">Invite Required:</apex:outputLink>
+		<apex:outputText style="font-size:140%; color:red" value="{!inviteReq}"/>
+		<apex:outputLink style="font-size:140%; color:orange" value="{!inviteWaitView}" target="_blank">No Response:</apex:outputLink>
+		<apex:outputText style="font-size:140%; color:orange" value="{!inviteWait}"/>
+		<apex:outputLink style="font-size:140%; color:blue" value="{!inviteDecView}" target="_blank">Invite Declined:</apex:outputLink>
+		<apex:outputText style="font-size:140%; color:blue" value="{!inviteDec}"/>
+		<apex:outputLink style="font-size:140%; color:green" value="{!inviteAccView}" target="_blank">Invite Accepted:</apex:outputLink>
+		<apex:outputText style="font-size:140%; color:green" value="{!inviteAcc}"/>
+	</apex:panelGrid>
+</apex:pageBlock>
+
+</apex:page>

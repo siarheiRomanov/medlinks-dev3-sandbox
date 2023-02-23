@@ -1,0 +1,151 @@
+<apex:page controller="AuditReportExportController" action="{!runBatch}" title="Audit Export" docType="html-5.0">
+    <apex:includeScript value="{!URLFOR($Resource.angular)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.AuditReportExport)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.json)}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.AuditReportExportStyle)}"/>
+    <!--<apex:stylesheet value="{!URLFOR($Resource.AuditReportExportStyle,'css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.bootstrap,'css/bootstrap-theme.min.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.bootstrap,'js/bootstrap.min.js')}"/>-->
+    
+    <div ng-app="auditReportExport" ng-controller="AuditFilterController as filter">
+		<span><h1>{!status}</h1></span>
+    	<apex:pageBlock title="Filter options">
+		    <form  ng-init="loadFilterObjectMetadata()" ng-submit="loadAudits()">
+		    
+			    <table>
+			    	<tr ng-repeat="criteria in criterias">
+			    		<!--<td>
+			    			<span ng-show="$index == 0">
+				    			<select ng-model="criteria.prefix" ng-change="changeCriteriaScope(criteria.prefix)">
+				    				<option value="AND" selected="selected">AND</option>
+				    				<option value="OR">OR</option>
+				    			</select>
+			    			</span>
+			    		</td>-->
+			    		<td class="filterCol">
+				    		<select id="crit:{{criteria.id}}" class="filterValueInput" ng-model="criteria.field.fieldName" ng-change="onCriteriaNameChanged(criteria.id, criteria.field.fieldName)" autofocus="autofocus">
+				    			<option ng-repeat="fieldMeta in objectMetadata.fieldMetadata" ng-value="fieldMeta.fieldName">{{fieldMeta.fieldLabel}}</option>
+				    		</select>
+			    		</td>
+			    		<td class="filterOperator">
+			    			<select ng-model="criteria.operator.value" class="filterOperator" ng-change="criteriaValueChanged(criteria.id)">
+			    				<option ng-repeat="operator in findFieldMetadata(criteria.field.fieldName).allowedOperators" 
+			    					ng-value="operator.value">{{operator.label}}</option>
+			    			</select>
+			    		</td>
+			    		<td class="filterCol">
+			    			<input class="filterValueInput" type="text" ng-model="criteria.value" ng-change="criteriaValueChanged(criteria.id)"></input>
+			    		</td>
+			    		<td style="width:10%;">
+			    			<div>
+			    				<a href="" ng-click="removeCriteria(criteria.id)" class="pageLink">Remove</a>
+			    			</div>
+			    		</td>
+			    		<td>
+			    		<span style="color:red; display:none;" id="error-{{criteria.id}}"></span>
+			    		</td>
+			    	</tr>
+			    </table>
+			    <input type="button" class="btn" ng-click="addCriteria()" ng-show="objectMetadata" value="Add criteria"></input>
+			    <input type="submit" class="btn" value="Apply filter" id="applyButton"></input>
+			    <input type="button" class="btn" ng-click="clearFilterCriterias()" value="Clear filter"></input>
+		    </form>
+	    </apex:pageBlock>
+     	<apex:pageBlock title="Audits" tabStyle="Audit__c"> 
+		    <apex:pageBlockSection columns="1">
+			    <table ng-init="loadAudits()" class="list" ng-show="audits.length > 0">
+			    	<tbody>
+				    	<tr class="headerRow">
+
+					    	<th class="zen-deemphasize">
+					    		Audit Number
+					    	</th>
+				    		<th class="zen-deemphasize">
+				    			Facility
+					    	</th>
+				    		<!--<th class="zen-deemphasize">
+				    			Patient Account
+					    	</th>
+							<th class="zen-deemphasize">
+								Patient Name
+					    	</th>-->
+					    	<th class="zen-deemphasize">
+					    		Audit Stage
+					    	</th>
+	    					<th class="zen-deemphasize">
+								Audit Type
+					    	</th>
+					    	<th class="zen-deemphasize">
+					    		Amount
+					    	</th>
+				    	</tr>
+				    	<tr ng-repeat="audit in audits" class="dataRow">
+			    			<td class="dataCell">
+			    				<a href="/{{audit.id}}">{{audit.auditNumber}}</a>
+			    			</td>
+			    			<td class="dataCell">
+			    				{{audit.facility}}
+			    			</td>
+			    			<!--<td class="dataCell">
+			    				{{audit.patientAccount}}
+			    			</td>
+			    			<td class="dataCell">
+			    				{{audit.patientName}}
+			    			</td>-->
+			    			<td class="dataCell">
+			    				{{audit.stage}}
+			    			</td>
+			    			<td class="dataCell">
+			    				{{audit.auditType}}
+			    			</td>
+			    			<td class="dataCell">
+			    				{{audit.auditAmount|currency}}
+			    			</td>
+				    	</tr>
+			    	</tbody>
+			    </table>
+
+			    <div ng-show="isAuditsNotFound()">
+			    	<h1>No Audits found</h1>
+			    </div>
+			</apex:pageBlockSection>
+			<apex:pageBlockSection columns="1">
+			    	<div id="paginator">
+				    	<span style="float:left; display:inline-block;">
+				    		<label style="display:inline-block;">Show </label>
+				    		<select id="pageNumberSelector" ng-model="pageSize" ng-change="pageSizeChanged()">
+					    		<option value="10">10</option>
+					    		<option value="25">25</option>
+					    		<option value="50">50</option>
+					    		<option value="100">100</option>
+					    		<option value="200">200</option>
+				    		</select>
+				    		of {{recordsNumber}} records
+				    	</span>
+						<span style="float:right; display:inline-block;" ng-show="isPaginationShown()">
+							<span>
+								<a href="" class="pageLink" ng-click="movePage(-1)" ng-show="isPreviousPageAvailable()">Previous</a>
+							
+								<input class="pageInput" style="width:25px;" ng-model="pageNumber"></input> of {{overalPages}}
+				    			<a href="" class="pageLink" ng-click="movePage(1)" ng-show="isNextPageAvailable()">Next</a>
+			    			</span>
+				    	</span>
+			    	</div>
+			</apex:pageBlockSection>
+	    </apex:pageBlock>
+	    <div ng-show="isAllowedExport()">
+	    	<!--<apex:pageBlock title="Export options">
+		    	<apex:pageBlockSection>
+		    			<input type="checkbox" class="checkbox" ng-model="startPurgeAuto">Start purge automatically</input>
+		    	</apex:pageBlockSection>
+    	 	</apex:pageBlock>-->
+		    <apex:pageBlock title="Finish">
+	    		<apex:pageBlockSection >
+		   				<input type="button" class="btn" value="Start export" ng-click="runBatch()"></input>
+		   				<input type="button" class="btn" value="Delete uploaded records" ng-show="isDeleteAvailable()" ng-click="runDeleteBatch()"></input>
+		   		</apex:pageBlockSection>
+		   	</apex:pageBlock>
+	   	</div>
+    </div>
+</apex:page>

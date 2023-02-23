@@ -1,0 +1,6 @@
+.hidden {
+    display: none;
+}
+:host {
+    --sds-c-textarea-sizing-min-height: 200px;
+}

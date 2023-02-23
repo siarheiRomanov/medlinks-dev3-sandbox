@@ -1,0 +1,660 @@
+<apex:page standardController="Audit__c" extensions="AuditCaseRptExt" showHeader="false" applyHtmlTag="false" renderAs="pdf">
+<head>
+<!-- renderAs="pdf"  -->
+ <style type="text/css">
+  @page
+  {
+
+    /* Landscape orientation */
+    size:landscape;
+    margin-top: 1.8cm;
+    margin-left: .6cm;
+    margin-right: .8cm;
+    font-family: Arial Unicode MS;
+    padding: 0px;
+    
+    @top-left {
+    	background-image: url("{!URLFOR($RESOURCE.ReportLogo)}");    	
+    	background-repeat:no-repeat;
+    	background-postion:left bottom;
+    	margin-bottom:0px;
+    	 
+    }
+    @top-center {
+    	content: "Audit Case Summary Report" "\000A" "Exit Date: " "{!ExitDate}";					    	
+    	font-family: Arial Unicode MS;    
+    	font-size:12pt; 
+    	font-weight:bold;
+    	vertical-align: bottom;
+    	margin-bottom:0px;
+    	white-space: pre;
+    	
+    }
+    @top-right {
+    	content: "Medlinks Case ID: " "{!Audit__c.Name}";
+    	font-family: Arial Unicode MS;    
+    	font-size:12pt;
+    	font-weight:bold;
+    	vertical-align: middle;
+    	margin-bottom:0px;
+    }
+	@bottom-left {
+		content: "CONFIDENTIAL"
+	}
+	@bottom-center {
+		content: "Copyright " "\00A9" " 2009-2011 Medlinks Cost Containment Incorporated" "\000A" "All Rights Reserved";
+		font-size:8pt;
+		white-space:pre;		
+	}
+    
+    /* Put page numbers in the bottom right corner of each
+    page in the pdf document. */
+    @bottom-right {
+      content: "Page "  counter(page) " of " counter(pages);
+    }
+    
+    
+  }
+
+	body {
+		font-family: Arial Unicode MS;
+		font-size:10pt;
+		padding: 0px;
+	}
+	.tablecenter {
+		margin-left: auto;
+		margin-right: auto;
+		margin-top:15px;
+		margin-bottom:0px;
+		padding:0px;		
+		border-collapse:collapse;		
+		font-size:12pt;
+	}
+	.headtable1 {
+		width: 100%;
+		margin-top:10px;
+		margin-left:0px;
+		margin-right:0px;
+		margin-bottom:0px;
+		padding-top:0px;
+		border-collapse:collapse;		
+	}
+	.sumtable {
+		width: 100%;
+		margin-top:0px;
+		margin-left:0px;
+		margin-right:0px;
+		margin-bottom:0px;
+		padding-top:0px;
+		border-collapse:collapse;		
+	}
+	.depttable {
+		width: 100%;
+		margin-top:15px;
+		margin-left:0px;
+		margin-right:0px;
+		margin-bottom:0px;
+		padding-top:0px;
+		border-collapse:collapse;
+		font-size:10px;
+		white-space:pre;		
+	}
+
+	.rtcol {
+		border-right: 1px solid black;	
+	}
+	.itemrow {
+		border-right: 1px solid black;					
+	}
+	.deptrow {
+		border-right: 1px solid black;	
+		border-bottom: 1px solid black;	
+		background-color: #F1F1F1;
+	}
+	.totrow {
+		border: 2px solid black;	
+		background-color: #E4E4FF;	
+	}
+	.keytaboff {
+		display: none;
+	}
+  	.keytabon {
+  		margin-left: auto;
+		margin-right: auto;
+		margin-top:20px;
+		margin-bottom:0px;
+		padding:0px;		
+		border-collapse:collapse;
+		font-size:9pt;
+  	}
+  	.AnnotationTable, .AnnotationTable th, .AnnotationTable td {
+  		width: 100%;
+		margin-top:10px;
+		margin-left:0px;
+		margin-right:0px;
+		margin-bottom:0px;
+		padding-top:0px;
+		border: 1px solid black;
+		border-collapse:collapse;
+  	}
+	.AnnotationHeader {
+		background-color:#B9E1FF;"
+	}
+  	.AnnotationText td {
+  		border-bottom: 4px solid black;
+  	}
+  	.AnnotationDescription {
+		width: 20% !important;
+  	}
+
+ 
+</style>  
+</head>
+<body>
+	<apex:outputText value="{!Audit__c.Audit_Stage__c} {!Audit__c.Client_Audit_Account__r.Prefs_Include_Disputed__c}
+	 {!Audit__c.Client_Audit_Account__r.Prefs_Include_Unbilled__c} {!Audit__c.Date_Actual_Exit__c}" rendered="false" />
+	
+	<div width="100%" style="margin-top:0px; margin-botton:0px;">		
+		<table class="headtable1">
+			<tr>
+				<td style="text-align: right;" width="8%">
+	                <b>Client:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; white-space: nowrap;" width="28%">
+	            	<apex:outputField value="{!Audit__c.Client_Audit_Account__r.Name}"/>
+	            </td>           
+	            <td style="text-align: right;" width="14%">
+	                <b>Audit Type:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" width="15%">
+					<apex:outputField value="{!Audit__c.Audit_Type__c}"/>
+	            </td>
+	            <td style="text-align: right;" width="20%">
+	                <b>Medlinks Auditor:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" width="15%">
+					<apex:outputField value="{!Audit__c.Assigned_Auditor__r.Name}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Facility:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; white-space: nowrap;" >
+	            	<apex:outputField value="{!Audit__c.Account__r.Name}"/>
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>LOI Date:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					<apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Date_LOI__c}"/></apex:outputText>					
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Opposing Auditor:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.Opposing_Auditor__r.Name}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Address:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					{!FacilityAddr}
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>Audit Fee Paid:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	            	<apex:outputField value="{!Audit__c.Audit_Fee_Paid__c}"/>
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Opposing Audit Firm:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.Opposing_Audit_Account__r.Name}"/>
+	            </td>
+
+			</tr>
+			<tr>
+				<td height="30px" style="text-align: right; vertical-align: bottom" >
+	                <b>Patient:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; vertical-align: bottom" >
+					<apex:outputText value="{!stuffpn}"/>
+	            </td>           
+	            <td style="text-align: right; vertical-align: bottom" >
+	                <b>Patient DOB:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; vertical-align: bottom" >
+	            	<apex:outputText value="{!stuffpb}"/>
+	            </td>                       
+	            <td style="text-align: right; vertical-align: bottom" >
+	                <b>LOI Audit Amount:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; vertical-align: bottom" >
+	            	<apex:outputField value="{!Audit__c.Audit_Amount__c}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Account #:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					<apex:outputText value="{!stuffpa}"/>
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>MR #:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	            	<apex:outputText value="{!stuffpm}"/>
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Actual Bill Amount:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.TAmt_Billed__c}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>DOS:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	            	<apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Service_Start_Date__c}"/></apex:outputText>
+					to&nbsp;
+					<apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Service_End_Date__c}"/></apex:outputText>					
+				</td>           
+	            <td style="text-align: right;" >
+	                <b>Authorization Date:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >	            
+	            	<apex:outputField value="{!Audit__c.Patient_Auth_Date__c}"/>									
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Difference:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+    				<apex:outputText value="{0, number, currency}"> <apex:Param value="{!BillDiff}"/></apex:outputText>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Bill Items:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					<apex:outputField value="{!Audit__c.Tot_Items__c}"/>	            	
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>Payer/Type:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	           	    <apex:outputField value="{!Audit__c.Payer__c}"/>/<apex:outputField value="{!Audit__c.Payer_Type__c}"/>             
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Pre-Audit Disallowed:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.Pre_Audit_Dis__c}"/>
+	            </td>
+			</tr>
+		</table>	
+	</div>
+	
+	<apex:outputPanel id="totals" layout="block">
+    <table frame="box" border="1" width="100%" class="sumtable" style="margin-top:20px;">
+        <tr style="text-align:center; background-color:#B9E1FF" >           
+            <td>Total Billed</td>
+            <td>Underbilled</td>
+            <td>Unbilled</td>
+            <td colspan="2">Total Underbilled*</td>
+            <td colspan="2">Total Overbilled</td>
+            <td>Err Rate</td>
+            <td colspan="2">Disallowed</td>
+            <td colspan="2">Disputed*</td>
+            <td colspan="2">Net Adjustment</td>            
+            <td class="rtcol">Revised Total</td>
+        </tr>
+        <tr style="text-align:right;">
+            <td><apex:outputField value="{!Audit__c.TAmt_Billed__c}"/></td>     
+            
+            <td><apex:outputField id="tund" value="{!Audit__c.TAmt_Under__c}"/></td>
+                  
+            <td><apex:outputField id="tunb" value="{!Audit__c.TAmt_Unbill__c}"/></td>     
+            
+            <td><apex:outputField id="tsumu" value="{!Audit__c.TAmt_SumUnder__c}"/></td>       
+            <td><apex:outputField value="{!Audit__c.Percent_Under__c}"/></td>
+            
+            <td><apex:outputField id="tsumo" value="{!Audit__c.TAmt_SumOver__c}"/></td>        
+            <td><apex:outputField value="{!Audit__c.Percent_Over__c}"/></td>
+            
+            <td><apex:outputField value="{!Audit__c.Percent_Tot_Err__c}"/></td>
+            
+            <td><apex:outputField id="tdisa" value="{!Audit__c.TAmt_Disallowed__c}"/></td>     
+            <td><apex:outputField value="{!Audit__c.Percent_Disallowed__c}"/></td>
+            
+            <td><apex:outputField id="tdisp" value="{!Audit__c.TAmt_Disputed__c}"/></td>
+            <td><apex:outputField value="{!Audit__c.Percent_Disputed__c}"/></td>
+
+            <td><apex:outputField id="tadj" value="{!Audit__c.TAmt_Adj__c}"/></td>        
+            <td><apex:outputField value="{!Audit__c.Percent_Net_Adj__c}"/></td>
+            
+            <td class="rtcol"><apex:outputField id="trev" value="{!Audit__c.TAmt_Revised__c}"/></td>
+        </tr>
+    </table>
+	<span style="font-size:8pt;">
+		{!IncPrefs} 
+	</span>
+    </apex:outputPanel>
+    <div width="100%">
+    <table class="tablecenter">
+		<tr><td>Summary of Bill Item Adjustments</td></tr>
+	</table>
+	</div>
+    
+    <div width="100%" style="page-break-after:always;">
+    <apex:repeat value="{!pageSumLines}" var="pgsum">
+	
+	<table frame="box" border="1" width="100%" class="sumtable" style="margin-top:10px;">
+		<tr style="text-align:center; background-color:#B9E1FF">
+			<th colspan="4">&nbsp;</th>
+			<th colspan="3">Under Billed</th>
+			<th colspan="3">Over Billed</th>
+			<th colspan="2">Disputed</th>
+			<th colspan="2" class="rtcol">Disallowed</th>
+		</tr>
+		<tr style="text-align:center; background-color:#B9E1FF">
+			<th>Department</th>
+			<th>DOS</th>
+			<th>Charge Code</th>
+			<th>Bill Description</th>
+			<th>#</th><th>Amount</th><th>Code</th>
+			<th>#</th><th>Amount</th><th>Code</th>
+			<th>#</th><th>Amount</th>
+			<th>#</th><th class="rtcol">Amount</th>
+		</tr>
+		<apex:repeat var="b" value="{!pgsum}">
+		<tr class="{!b.Rowcls}">
+			<td style="text-align: center;">{!b.Dept}</td>
+			<td style="text-align: center;">{!b.DOS}</td>
+			<td style="text-align: center;">{!b.ChgCode}</td>
+			<td style="text-align: {!b.DescAlign}">{!b.BillDesc}</td>
+			<td style="text-align: right;">{!b.UBnum}</td>
+			<td style="text-align: right;">{!b.UBamt}</td>
+			<td style="text-align: center;">{!b.UBcode}</td>
+			<td style="text-align: right;">{!b.OBnum}</td>
+			<td style="text-align: right;">{!b.OBamt}</td>
+			<td style="text-align: center;">{!b.OBcode}</td>
+			<td style="text-align: right;">{!b.DSnum}</td>
+			<td style="text-align: right;">{!b.DSamt}</td>
+			<td style="text-align: right;">{!b.CDnum}</td>
+			<td class="rtcol" style="text-align: right;">{!b.CDamt}</td>
+		</tr>	
+		</apex:repeat> 
+	</table>
+
+	<span style="font-size:8pt;">
+		*Items not listed in CDM have no department code  
+	</span>
+
+	<table class="{!pgsum[0].KeyCls}">
+		<tr style="text-align:center;">
+			<th colspan="2"> Department Codes</th>
+			<th>&nbsp;</th>
+			<th colspan="2"> Underbilled Codes</th>
+			<th>&nbsp;</th>
+			<th colspan="2"> Overbilled Codes</th>	
+		</tr>
+		<apex:repeat var="k" value="{!TheKeys}">
+		<tr>
+			<td width="5%">{!k.dcode}</td><td width="26%">{!k.ddesc}</td>
+			<td width="4%">&nbsp;</td><td width="4%">{!k.ucode}</td><td width="26%">{!k.udesc}</td>
+			<td width="4%">&nbsp;</td><td width="4%">{!k.ocode}</td><td width="26%">{!k.odesc}</td>
+		</tr>
+		</apex:repeat>	
+	</table>
+	</apex:repeat>
+	</div>
+	
+	<!-- This is where the Annotations from the Audit Items Should go.  Below the Summary of Bill Items, and before the 
+		 boilerplate of department codes. -->
+    <div width="100%" style="page-break-after:always;">
+		 
+		<div width="100%">
+	    	<table class="tablecenter">
+				<tr><td>Bill Item Annotations</td></tr>
+			</table>
+		</div>
+		<table cols="2" width="100%" class="AnnotationTable">
+			<tr class="AnnotationHeader">
+				<th class="AnnotationDescription">DOS</th>
+				<th>Bill Description</th>
+			</tr>
+		   	<apex:repeat value="{!pageSumLines}" var="pgsum">
+				<apex:repeat var="b" value="{!pgsum}">
+					<!-- Only display an item if there is an Annotation for the line. -->
+					<tr style="{!if(isBlank(b.Annot),'display:none;','')}">
+						<td class="AnnotationDescription">{!b.DOS}</td>
+						<td>{!b.BillDesc}</td>
+					</tr>	
+					<tr class="AnnotationText" style="{!if(isBlank(b.Annot),'display:none;','')}">
+						<td colspan="2">{!b.Annot}</td>
+					</tr>
+				</apex:repeat>
+			</apex:repeat> 
+		</table>
+	</div>
+	<!-- End of Annotation section -->
+   
+	<div width="100%" style="margin-top:0px; margin-botton:0px;">		
+		<table class="headtable1">
+			<tr>
+				<td style="text-align: right;" width="8%">
+	                <b>Client:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; white-space: nowrap;" width="28%">
+	            	<apex:outputField value="{!Audit__c.Client_Audit_Account__r.Name}"/>
+	            </td>           
+	            <td style="text-align: right;" width="14%">
+	                <b>Audit Type:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" width="15%">
+					<apex:outputField value="{!Audit__c.Audit_Type__c}"/>
+	            </td>
+	            <td style="text-align: right;" width="20%">
+	                <b>Medlinks Auditor:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" width="15%">
+					<apex:outputField value="{!Audit__c.Assigned_Auditor__r.Name}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Facility:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; white-space: nowrap;" >
+	            	<apex:outputField value="{!Audit__c.Account__r.Name}"/>
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>LOI Date:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					<apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Date_LOI__c}"/></apex:outputText>					
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Opposing Auditor:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.Opposing_Auditor__r.Name}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Address:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					{!FacilityAddr}
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>Audit Fee Paid:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	            	<apex:outputField value="{!Audit__c.Audit_Fee_Paid__c}"/>
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Opposing Audit Firm:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.Opposing_Audit_Account__r.Name}"/>
+	            </td>
+
+			</tr>
+			<tr>
+				<td height="30px" style="text-align: right; vertical-align: bottom" >
+	                <b>Patient:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; vertical-align: bottom" >
+					<apex:outputText value="{!stuffpn}"/>
+	            </td>           
+	            <td style="text-align: right; vertical-align: bottom" >
+	                <b>Patient DOB:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; vertical-align: bottom" >	            	            
+	            	<apex:outputText value="{!stuffpb}"/>	            
+	            </td>                       
+	            <td style="text-align: right; vertical-align: bottom" >
+	                <b>LOI Audit Amount:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; vertical-align: bottom" >
+	            	<apex:outputField value="{!Audit__c.Audit_Amount__c}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Account #:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					<apex:outputText value="{!stuffpa}"/>
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>MR #:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	            	<apex:outputText value="{!stuffpm}"/>
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Actual Bill Amount:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.TAmt_Billed__c}"/>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>DOS:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	            	<apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Service_Start_Date__c}"/></apex:outputText>
+					to&nbsp;
+					<apex:outputText value="{0,date,MM-dd-yyyy}"> <apex:Param value="{!Audit__c.Service_End_Date__c}"/></apex:outputText>					
+				</td>           
+	            <td style="text-align: right;" >
+	                <b>Authorization Date:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >	            
+	            	<apex:outputField value="{!Audit__c.Patient_Auth_Date__c}"/>									
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Difference:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+    				<apex:outputText value="{0, number, currency}"> <apex:Param value="{!BillDiff}"/></apex:outputText>
+	            </td>
+			</tr>
+			<tr>
+				<td style="text-align: right;" >
+	                <b>Bill Items:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+					<apex:outputField value="{!Audit__c.Tot_Items__c}"/>	            	
+	            </td>           
+	            <td style="text-align: right;" >
+	                <b>Payer/Type:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left;" >
+	           	    <apex:outputField value="{!Audit__c.Payer__c}"/>/<apex:outputField value="{!Audit__c.Payer_Type__c}"/>             
+	            </td>                       
+	            <td style="text-align: right;" >
+	                <b>Pre-Audit Disallowed:&nbsp;&nbsp;</b>
+	            </td>
+	            <td style="text-align: left; " >
+	            	<apex:outputField value="{!Audit__c.Pre_Audit_Dis__c}"/>
+	            </td>
+			</tr>
+		</table>	
+	</div>
+	<div width="100%">
+		<table frame="box" border="1" class="depttable">
+		<tr style="text-align:center; background-color:#B9E1FF;">
+			<th>Department</th>
+			<th>Total Billed</th>
+			<th colspan="2">Unbilled**</th>
+			<th colspan="2">Under Billed**</th>
+			<th colspan="2">Over Billed</th>
+			<th colspan="2">Over Billed-<br/>No MD Order</th>
+			<th>Total<br/>Err Rate</th>
+			<th colspan="2">Disputed**</th>
+			<th colspan="2">Disallowed</th>		
+			<th colspan="2">Net<br/>Adjustment</th>
+			<th colspan="2">Revised<br/>Amount</th>
+		</tr>
+		<apex:repeat var="s" value="{!TheDepts}">
+		<tr style="text-align: right;">
+			<td style="text-align: center;">{!s.dep}</td>
+			<td>{!s.tot}</td>
+			<td>{!s.unb}</td><td>{!s.unbp}</td>
+			<td>{!s.und}</td><td>{!s.undp}</td>
+			<td>{!s.ov}</td><td>{!s.ovp}</td>
+			<td>{!s.md}</td><td>{!s.mdp}</td>
+			<td>{!s.er}</td>
+			<td>{!s.ds}</td><td>{!s.dsp}</td>
+			<td>{!s.cd}</td><td>{!s.cdp}</td>
+			<td>{!s.net}</td><td>{!s.netp}</td>
+			<td>{!s.rev}</td><td>{!s.revp}</td>
+		</tr>
+		</apex:repeat>
+		</table>
+	<span style="font-size:8pt;">
+		*Items not listed in CDM have no department code;&nbsp;&nbsp;*{!IncPrefs} 
+	</span>
+	</div>
+	<div width="100%">
+	<span style="font-size:8pt;">
+		<br/>The undersigned are in full agreement with the findings summarized in this Audit Report. 		
+		Items not listed are correctly billed and require no adjustments.  
+	</span>
+	<table width="100%" style="font-size:9pt; margin-top:5px">
+		<tr>
+			<td>Hospital:&nbsp;&nbsp;</td>
+			<td>Signature _____________________________</td>			
+			<td>Title ____________________</td>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Carrier:&nbsp;&nbsp;</td>
+			<td>Signature _____________________________</td>
+			<td>Title ____________________</td>
+		</tr>
+		<tr>	
+			<td>&nbsp;</td>
+			<td>Name ________________________________</td>
+			<td>Date ____________________</td>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>Name ________________________________</td>
+			<td>Date ____________________</td>
+		</tr>
+	</table>
+	</div>
+
+</body>
+</apex:page>

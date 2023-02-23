@@ -1,0 +1,25 @@
+<apex:page controller="AuditSchedViewController" tabstyle="Audit__c">
+
+	<apex:PageBlock title="{!vname}">
+		<apex:PageBlockTable value="{!SchedViewList}" var="a">
+			
+			<apex:column headerValue="Audit Number">
+        		<apex:outputLink value="{!a.audlink}">{!a.audit.Name}</apex:outputLink>
+        	</apex:column>
+			<apex:column value="{!a.audit.Audit_Type__c}"/>
+			<apex:column value="{!a.audit.Account__c}"/>
+			<apex:column value="{!a.audit.Date_LOI__c}"/>
+			<apex:column value="{!a.audit.Patient_Name__c}"/>
+			<apex:column value="{!a.audit.Patient_Account__c}"/>
+			<apex:column value="{!a.audit.Audit_Amount__c}"/>
+			<apex:column headerValue="Proposed Exit">
+        		<apex:outputLink value="{!a.evlink}">{!a.evdate}</apex:outputLink>
+        	</apex:column> 
+			<apex:column value="{!a.audit.Assigned_Auditor__c}"/>
+			<apex:column value="{!a.audit.Opposing_Auditor__c}"/>
+			<apex:column value="{!a.audit.Opposing_Scheduler__c}"/>
+			        	
+		</apex:PageBlockTable>	
+	</apex:PageBlock>
+
+</apex:page>

@@ -1,0 +1,18 @@
+.filterValueCol{
+	width:250px;
+}
+
+.filterValueInput{
+	width:250px;
+}
+
+.filterOperator {
+	width:125px;
+}
+a.pageLink{
+	color:#67f;
+	text-decoration: underline;
+}
+a.pageLink:hover {
+	cursor: pointer;
+}

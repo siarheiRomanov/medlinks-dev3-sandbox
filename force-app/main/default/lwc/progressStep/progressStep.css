@@ -1,0 +1,30 @@
+.step-name-grey {
+    font-size: 21px;
+    color: #808080;
+}
+
+.step-name-normal {
+    font-size: 21px;
+}
+
+.step-name-bold {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.done-icon {
+    width: 79px;
+    height: 24px;
+    border-radius: 24px;
+    font-size: 16px;
+    color: #34AA79;
+    background-color: #E0F7ED;
+}
+
+.done-icon p {
+    text-align: center;
+}
+
+.progress-percent {
+    color: #737D96;
+}

@@ -1,0 +1,29 @@
+<apex:page id="AppealCasePop" standardController="Appeal__c" extensions="AppealCasePopCtrl" showHeader="false" sidebar="false">
+    <script type="text/JavaScript">
+
+        function stuffp() {
+            if (confirm("Click 'OK' to download the Appeal Report PDF file,\nor click 'Cancel' to display it as a PDF web page")) {
+                downloadAction();
+            } else {
+                displayAction();
+            }
+        }
+    </script>
+
+    <body onload="stuffp()">
+    <apex:PageBlock >
+        <apex:form >
+
+            <apex:outputText value="Loading Appeal Case Report..." id="loader" />
+
+            <apex:actionFunction name="downloadAction" action="{!SaveReportPage}" immediate="true">
+            </apex:actionFunction>
+
+            <apex:actionFunction name="displayAction" action="{!DisplayReportPage}" immediate="true">
+            </apex:actionFunction>
+
+        </apex:form>
+
+    </apex:PageBlock>
+    </body>
+</apex:page>

@@ -1,0 +1,4 @@
+<apex:page id="DocumentEntryPage" standardController="ContentVersion" showHeader="false">
+    <apex:sectionHeader title="Content Version" subTitle="{!ContentVersion.Title}"/>
+    <apex:detail relatedList="false" title="false" inlineEdit="true"/>
+</apex:page>

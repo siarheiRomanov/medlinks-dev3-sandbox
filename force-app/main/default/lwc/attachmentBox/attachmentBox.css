@@ -1,0 +1,22 @@
+.file-name {
+    color: #005FB2;
+    font-weight: 500;
+}
+
+.file-add-data {
+    color: #080707;
+    opacity: 0.5;
+}
+
+.item-data {
+    background: #F3F2F2;
+    border-radius: 5px;
+}
+
+.container {
+    width: 282px;
+}
+
+.container div:nth-child(1) {
+    width: 230px;
+}

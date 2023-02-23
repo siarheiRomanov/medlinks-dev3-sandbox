@@ -1,0 +1,140 @@
+<aura:component implements="force:appHostable,lightning:isUrlAddressable" access="global" controller="DocGeneratorCtrl">
+    <aura:attribute name="File"                    type="Object"/>
+    <aura:attribute name="isButtonUnactive"        type="Boolean" default="true"/>
+    <aura:attribute name="openLWS"                 type="Boolean" default="false"/>
+    <aura:attribute name="firstScreen"             type="Boolean" default="true"/>
+    <aura:attribute name="secondScreen"            type="Boolean" default="false"/>
+    <aura:attribute name="thirdScreen"             type="Boolean" default="false"/>
+    <aura:attribute name="fourthScreen"            type="Boolean" default="false"/>
+    <aura:attribute name="refRecordId"             type="String"/>
+    <aura:attribute name="Baseurl"                 type="String"/>
+    <aura:attribute name="docxDocumentId"          type="String"/>
+    <aura:attribute name="pdfDocumentId"           type="String"/>
+    <aura:attribute name="templateUrl"             type="Object"/>
+    <aura:attribute name="current"                 type="String"  default="0"/>
+    <aura:attribute name="secondScreenWasAchieved" type="Boolean" default="false"/>
+    <aura:attribute name="thirdTab"                type="Boolean" default="false"/>
+    <aura:attribute name="templateType"            type="String"/>
+    <aura:attribute name="fileName"                type="String"/>
+    <aura:attribute name="letterType"              type="String"/>
+    <aura:attribute name="pageReference"           type="Object"/>
+    <aura:attribute name="secondTab"               type="Boolean" default="false"/>
+    <aura:attribute name="isFileLoaded"            type="Boolean" default="false"/>
+
+    <aura:handler name="init"   value="{!this}"            action="{!c.init}"/>
+    <aura:handler name="change" value="{!v.pageReference}" action="{!c.init}"/>
+
+    <div class="slds-page-header slds-m-bottom_small">
+        <!-- LAYOUT GRID -->
+        <div class="slds-grid">
+            <!-- GRID COL -->
+            <div class="slds-col slds-has-flexi-truncate">
+                <div class="slds-media slds-no-space slds-grow">
+                    <div class="slds-media__figure">
+                        <lightning:icon iconName="standard:partner_fund_claim"/>
+                    </div>
+                    <div class="slds-media__body">
+                        <p class="slds-line-height_reset">Document Generation</p>
+                        <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"
+                            title="Invoice Generation">Document Generation</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slds-box slds-theme_default" style="min-height: 75vh">
+        <div class="slds-m-around_medium">
+            <c:progressIndicator pathStep="{!v.current}"/>
+        </div>
+
+        <aura:if isTrue="{!v.firstScreen}">
+            <c:chooseLetterType onlettertype="{!c.handleOnLetterType}"></c:chooseLetterType>
+        </aura:if>
+
+        <aura:if isTrue="{!v.secondScreen}">
+            <c:appealFieldSetInput aura:id      = "appealFieldSetInput"
+                                   onsuccess    = "{!c.handleOnSuccess}"
+                                   recordId     = "{!v.refRecordId}"
+                                   fieldSetName = "{!v.letterType}"
+            ></c:appealFieldSetInput>
+        </aura:if>
+
+        <aura:if isTrue="{!v.openLWS}">
+            <div class="slds-align_absolute-center slds-p-top_large">
+                <c:orderBlankDocFromTemplate recordId                = "{!v.refRecordId}"
+                                             docVersion              = "{!v.templateType}"
+                                             templateUrl             = "{!v.templateUrl}"
+                                             contractFormDocFromUser = "{!v.File}"
+                                             onvaluechange           = "{!c.getValueFromLwc}"
+                                             letterType              = "{!v.letterType}"
+                ></c:orderBlankDocFromTemplate>
+            </div>
+        </aura:if>
+
+        <aura:if isTrue="{!v.thirdScreen}">
+            <div class="slds-m-around_medium">
+                <span class="slds-text-heading_small">To create document, you can use following options:</span>
+            </div>
+
+            <lightning:tabset>
+                <lightning:tab onactive="{!c.handleTab}" label="Generate from existing template">
+                    <c:templateList ontemplatechange = "{!c.setTemplateUrl}"
+                                    recordId         = "{!v.refRecordId}"
+                                    aura:id          = "templateList"
+                    ></c:templateList>
+                </lightning:tab>
+
+                <lightning:tab onactive="{!c.handleSecondTab}" label="Generate from uploaded template"
+                               title="Generate from uploaded template">
+                    <c:fileUploader recordId       = "{!v.refRecordId}"
+                                    onfileuploaded = "{!c.handleFilesChange}"
+                                    onremovefile   = "{!c.removeFile}"
+                    ></c:fileUploader>
+                </lightning:tab>
+
+                <lightning:tab onactive="{!c.handleThirdTab}" label="Create new template">
+                    <c:displayApiFields recordId="{!v.refRecordId}"></c:displayApiFields>
+                </lightning:tab>
+            </lightning:tabset>
+        </aura:if>
+
+        <aura:if isTrue="{!v.fourthScreen}">
+            <c:lookAtPreview docId          = "{!v.docxDocumentId}"
+                             pdfId          = "{!v.pdfDocumentId}"
+                             recordId       = "{!v.refRecordId}"
+                             fileName       = "{!v.fileName}"
+                             downloadDocUrl = "{!'/sfc/servlet.shepherd/document/download/' + v.docxDocumentId}"
+                             downloadPDFUrl = "{!'/sfc/servlet.shepherd/document/download/' + v.pdfDocumentId}"
+                             letterType     = "{!v.letterType}"></c:lookAtPreview>
+        </aura:if>
+
+        <div class="buttons-block slds-grid slds-grid_align-end">
+            <aura:if isTrue="{!v.firstScreen}">
+                <lightning:button variant="brand-outline" label="Cancel" onclick="{!c.handleFinish}" class="slds-m-top_small"/>
+                <lightning:button variant="brand"         label="Next"   onclick="{!c.toSecondScreen}" disabled="{!v.isButtonUnactive}" class="slds-m-top_small"/>
+            </aura:if>
+            <aura:if isTrue="{!v.secondScreen}">
+                <lightning:button variant="brand-outline" label="Cancel"   onclick="{!c.handleFinish}" class="slds-m-top_small"/>
+                <lightning:button variant="brand-outline" label="Previous" onclick="{!c.previousToTheFirstScreen}" class="slds-m-top_small"/>
+                <lightning:button variant="brand"         label="Next"     onclick="{!c.toThirdScreen}" class="slds-m-top_small"/>
+            </aura:if>
+            <aura:if isTrue="{!v.thirdScreen}">
+                <lightning:button variant="brand-outline" label="Cancel"   onclick="{!c.handleFinish}" class="btn-finish"/>
+                <lightning:button variant="brand-outline" label="Previous" onclick="{!c.previousToTheSecondScreen}" class="slds-m-top_small"/>
+            </aura:if>
+            <aura:if isTrue="{!and(v.thirdScreen, !v.thirdTab)}">
+                <lightning:button variant   = "brand"
+                                  label     = "Next"
+                                  onclick   = "{!c.createAttach}"
+                                  disabled  = "{!v.isButtonUnactive}"
+                                  class     = "btn-next"/>
+            </aura:if>
+            <aura:if isTrue="{!v.fourthScreen}">
+                <lightning:button variant="brand-outline" label="Previous" onclick="{!c.previousToTheThirdScreen}" class="slds-m-top_small"/>
+                <lightning:button variant="brand"         label="Finish"   onclick="{!c.handleFinish}"             class="btn-finish"/>
+            </aura:if>
+        </div>
+
+    </div>
+</aura:component>

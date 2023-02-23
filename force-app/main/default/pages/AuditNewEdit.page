@@ -1,0 +1,143 @@
+<apex:page standardController="Audit__c" extensions="AuditEditExtension">
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script type="text/JavaScript">
+    var $j = jQuery.noConflict();
+    $j(document).ready(function(){
+        $j('.labelCol').css("width", "36%");
+        $j('.data2Col').css("width", "64%");   
+     });
+</script>
+<script type="text/JavaScript">
+    function FlipFC(sid, fid, cid) {
+        var esid = esc(sid);
+        var efid = esc(fid);
+        var ecid = esc(cid);
+        var ewid = esc(cid + '_lkwgt');
+        // alert ('sid = ' + $j(esid).val());
+        if ($j(esid).val() == 'true') {
+            // Editing a facility that is NOT an audit client, thus we cannot allow the checkbox to be changed
+            alert('ERROR: The facility associated with this audit is NOT a client account. A separate audit client account must be specified');
+            $j(efid).prop("checked", false);
+        }
+        // alert($j(efid).prop("checked") + ' ' + $j(ecid).val() + ' CSS (client) = ' + $j(ecid).css('display')+ ' CSS (widget) = ' + $j(ewid).css('display') );
+        else {
+            if ($j(efid).prop("checked") == true) {
+                $j(ecid).css('display', 'none');
+                $j(ewid).css('display', 'none');
+            }
+            else {
+                $j(ecid).css('display', 'inline-block');
+                $j(ewid).css('display', 'inline');
+            }
+        } 
+    }
+    function esc(myid) {
+           return '#' + myid.replace(/(:|\.)/g,'\\\\$1');
+    }
+
+</script>
+
+
+</head>
+
+    <apex:sectionHeader title="Audit Edit" subtitle="{!IF(Audit__c.name="", "New Audit", Audit__c.name)}"/>
+    <apex:messages style="color:red;font-size:1.5em;" />
+    <apex:form id="theForm" >    
+        <apex:pageBlock id="thePageBlock" title="Audit Edit" mode="edit" >
+            <!-- This page mode is: {!PageMode} <br/> -->
+            <!-- The facility is: {!Facility} <br/> -->
+            <apex:inputHidden value="{!FCalert}" id="FCstate"/>
+            <apex:inputHidden value="{!Audit__c.Patient_DOB__c}"/>
+            <apex:inputHidden value="{!Audit__c.Patient_Name__c}"/>            
+            <apex:pageBlockButtons location="both">
+            <apex:commandButton value="Save" action="{!save}"/>
+            <apex:commandButton value="Save & New" action="{!save}" rendered="{!isNew}"/>
+            <apex:commandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>   
+        
+        <apex:pageBlockSection id="theCaseOuter" title="Audit Case Information" columns="2">
+
+            <apex:pageBlockSection id="thisBlock" showHeader="false" columns="1">
+                <apex:inputField value="{!Audit__c.Audit_Stage__c}" required="false"/>                
+                <apex:inputField value="{!Audit__c.Audit_Type__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Audit_Role__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Account__c}" required="true"/>
+                <apex:inputField id="isFC" value="{!Audit__c.Facility_Is_Client__c}" required="false" onchange="FlipFC('{!$Component.FCstate}', '{!$Component.isFC}','{!$Component.ClientAcct}')">
+                </apex:inputfield>               
+                <apex:inputField id="ClientAcct" value="{!Audit__c.Client_Audit_Account__c}" required="false"/>                               
+                <apex:inputField value="{!Audit__c.Facility_Billing_Contact__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Facility_MR_Contact__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Payer__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Payer_Type__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Pre_Audit_Dis__c}" required="false"/>                
+                <apex:inputField value="{!Audit__c.Audit_Fee_Paid__c}" required="false"/>                
+                <apex:inputField value="{!Audit__c.Invoice_Number__c}" required="false"/>                            
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="1">            
+                <apex:inputField value="{!Audit__c.Audit_Amount__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Patient_Last_Name__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Patient_First_Name__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Patient_DOBedit__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Patient_Account__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Patient_MR__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Service_Start_Date__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Service_End_Date__c}" required="true"/>
+                <apex:inputField value="{!Audit__c.Approved__c}" />
+                <apex:inputField value="{!Audit__c.Not_Approved__c}" />
+                <apex:inputField value="{!Audit__c.Audit_Policy_Sent_Date__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.DRG_Validation_OK__c}" />
+                <apex:inputField value="{!Audit__c.DRG_Validation_Altered__c}" />
+                <apex:inputField value="{!Audit__c.Comments__c}" style="width:95%;"/>
+            </apex:pageBlockSection>            
+                       
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection title="Auditor Information" columns="2">
+
+            <apex:pageBlockSection columns="1">        
+                <apex:inputField value="{!Audit__c.Assigned_Auditor__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Assigned_Scheduler__c}" required="false"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="1">        
+                <apex:inputField value="{!Audit__c.Opposing_Auditor__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Opposing_Scheduler__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Opposing_Audit_Account__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Opposing_Audit_Case_ID__c}" required="false"/>
+            </apex:pageBlockSection>
+                    
+        </apex:pageBlockSection>
+
+
+        <apex:pageBlockSection title="Audit Status" columns="2">
+            
+            <apex:pageBlockSection columns="1">                    
+                <apex:inputField value="{!Audit__c.Date_LOI__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Patient_Auth_Date__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Date_Proposed_Exit__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Exit_Duration__c}" required="false"/>
+                <apex:inputField value="{!Audit__c.Exit_Mode__c}" required="false"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="1">        
+                <apex:outputField value="{!Audit__c.Date_Bill_Requested__c}" />
+                <apex:inputField value="{!Audit__c.Date_Bill_Received__c}" />
+                <apex:outputField value="{!Audit__c.Date_Chart_Pull_Requested__c}"/>
+                <apex:inputField value="{!Audit__c.Date_Chart_Pull_Confirmed__c}"/>
+                <apex:outputField value="{!Audit__c.Bill_Uploaded__c}" />
+                <apex:inputField value="{!Audit__c.Bill_Attached_as_Image__c}" />
+                <apex:inputField value="{!Audit__c.Bill_Analysis_Complete__c}" />
+                <apex:outputField value="{!Audit__c.Date_Bill_Analysis_Complete__c}"/>               
+                <apex:outputField value="{!Audit__c.Date_Actual_Exit__c}" />
+                <apex:outputField value="{!Audit__c.Date_Audit_Completed__c}" />
+            </apex:pageBlockSection>
+            
+        </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+    </apex:form>
+
+
+</apex:page>

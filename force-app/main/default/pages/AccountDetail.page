@@ -1,0 +1,37 @@
+<apex:page standardController="Account" showHeader="true" tabStyle="Account">
+
+<apex:detail subject="{!account.Id}" relatedList="true" title="true" inlineEdit="true" showChatter="true" />
+
+<script type="text/javascript">
+
+function addLoadEvent(func) {
+  var oldonload = window.onload;
+  if (typeof window.onload != 'function') {
+    window.onload = func;
+  } else {
+    window.onload = function() {
+      if (oldonload) {
+        oldonload();
+      }
+      func();
+    }
+  }
+}
+
+addLoadEvent(function() {
+        var show = '{!Account.Auditable__c}';
+        var cn;
+        if (show == 'true') {
+            cn = 'showListButton';
+        }
+        else {
+            cn = 'hideListButton';
+        }
+        var nl = document.getElementsByClassName(cn);
+        if (nl != null && nl.length == 1) {
+            twistSection(nl[0]);
+        }
+});
+
+</script>
+</apex:page>

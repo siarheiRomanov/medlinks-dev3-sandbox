@@ -1,0 +1,76 @@
+<apex:page standardController="Account" showHeader="true" tabStyle="Account">
+
+<apex:sectionHeader title="Account" subtitle="{!Account.name}"/>
+
+<apex:detail subject="{!account.Id}" relatedList="false" relatedListHover="true" title="false"/>
+<!--
+<apex:form >
+-->
+
+<apex:pageBlock mode="maindetail">
+
+<apex:pageBlockSection title="Address Information" columns="2">
+<apex:pageBlockSectionItem >
+<apex:outputLabel value="Copy to Facility Address" for="theSame"/>
+<apex:outputField value="{!Account.Address_Same__c}" id="theSame"/>
+</apex:pageBlockSectionItem>
+<b>Address of facility where onsite audits performed, if different from main address</b>
+
+<apex:pageBlockSectionItem >
+<apex:outputLabel value="Account Street" for="a_1"/>
+<apex:outputField value="{!Account.BillingStreet}" id="a_1"/>
+</apex:pageBlockSectionItem>
+<apex:outputField title="Facility Street" value="{!Account.Facility_Street__c}"/>
+
+<apex:pageBlockSectionItem >
+<apex:outputLabel value="Account City" for="a_2"/>
+<apex:outputField value="{!Account.BillingCity}" id="a_2"/>
+</apex:pageBlockSectionItem>
+<apex:outputField title="Facility City" value="{!Account.Facility_City__c}"/>
+
+<apex:pageBlockSectionItem >
+<apex:outputLabel value="Account State" for="a_3"/>
+<apex:outputField value="{!Account.BillingState}" id="a_3"/>
+</apex:pageBlockSectionItem>
+<apex:outputField title="Facility State" value="{!Account.Facility_State__c}"/>
+
+<apex:pageBlockSectionItem >
+<apex:outputLabel value="Account Zip Code" for="a_4"/>
+<apex:outputField value="{!Account.BillingPostalCode}" id="a_4"/>
+</apex:pageBlockSectionItem>
+<apex:outputField title="Facility Zip Code" value="{!Account.Facility_Zip__c}"/>
+<!--
+<apex:inlineEditSupport event="ondblClick"
+showOnEdit="saveButton,cancelButton" hideOnEdit="editButton" />
+-->
+</apex:pageBlockSection>
+
+<apex:pageBlockSection title="Audit Preferences" columns="1">
+<apex:outputField title="Department-level Reporting" value="{!Account.Prefs_Dept_Reports__c}"/>
+<apex:outputField title="Include Disputed" value="{!Account.Prefs_Include_Disputed__c}"/>
+<apex:outputField title="Include Un/Underbilled" value="{!Account.Prefs_Include_Unbilled__c}"/>
+</apex:pageBlockSection>
+
+<!--
+<apex:pageBlockButtons >
+<apex:commandButton value="Edit" action="{!save}" id="editButton" />
+<apex:commandButton value="Save" action="{!save}" id="saveButton" />
+<apex:commandButton value="Cancel" action="{!cancel}" id="cancelButton" />
+</apex:pageBlockButtons>
+-->
+
+</apex:pageBlock>
+
+<!--
+</apex:form>
+-->
+<apex:relatedList list="OpenActivities"/>
+<apex:relatedList list="ActivityHistories"/>
+<apex:relatedList list="Audits2__r" title="Active Audits at this Facility" />
+<apex:relatedList list="Audits__r" title="Active Audits for this Client Account" />
+<apex:relatedList list="Audits1__r" title="Active Opposing Audits for this Account" />
+<apex:relatedList list="Contacts" />
+<apex:relatedList list="AccountContactRoles" />
+<apex:relatedList list="NotesAndAttachments"/>
+<apex:relatedList list="CDMs__r"/>
+</apex:page>
